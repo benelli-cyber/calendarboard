@@ -168,6 +168,11 @@ family-dashboard/
 6. **Remote access:** Tailscale instructions for LXC and family phones
 7. **Polish:** dim schedule, stale-data indicators, compare-weather script
 
+## Go-Live Checklist (remind the user before finishing all phases)
+Open items the user has asked to be reminded about. Raise any unchecked items at the end of each phase, and do not call the project finished until they are done.
+- [ ] **Weather location:** set the real `weather.lat` / `weather.lon` (and `weather.userAgent` with a contact address) in the LXC's `config.json`. Development used a public landmark (National Mall, DC) in `config.demo.json`.
+- [ ] **Open-Meteo fallback:** confirm it works live from the LXC (it was rate-limited from the cloud dev sandbox, so it was only tested against a sample response).
+
 ## Testing & Verification
 - After each phase, give the exact command to run locally and the URL to open
 - Test the layout in a desktop browser with the viewport set to **1080×1920**
