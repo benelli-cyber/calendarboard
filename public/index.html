@@ -24,29 +24,33 @@
     <!-- 2. Weather alert banner (Phase 2; hidden unless an alert is active) -->
     <div id="alert-banner" class="alert-banner" hidden></div>
 
-    <!-- 3. Today -->
-    <section class="panel today">
-      <h2 class="section-title">Today</h2>
-      <ul id="today-events" class="events events-today"></ul>
+    <!-- 3. Calendar: month grid or Sun–Sat week (display.calendarView) -->
+    <section class="panel calendar">
+      <div class="cal-header">
+        <h2 id="cal-title" class="cal-title"></h2>
+        <div id="calendar-stale" class="stale" hidden></div>
+      </div>
+      <div id="cal-weekdays" class="cal-weekdays"></div>
+      <div id="cal-grid" class="cal-grid"></div>
     </section>
 
-    <!-- 4. Upcoming: next N days, grouped by day -->
-    <section class="panel upcoming">
-      <h2 class="section-title">Upcoming</h2>
-      <div id="upcoming-days" class="upcoming-days"></div>
-      <div id="calendar-stale" class="stale" hidden></div>
-    </section>
-
-    <!-- 5. Forecast strip (Phase 2) -->
+    <!-- 4. Forecast strip (Phase 2) -->
     <section id="forecast" class="panel forecast placeholder">5-day forecast</section>
 
-    <!-- 6. To-do list (Phase 3) -->
+    <!-- 5. To-do list (Phase 3) -->
     <section id="todos" class="panel todos">
       <h2 class="section-title">To-Do</h2>
       <div class="placeholder">Shared to-do list</div>
     </section>
 
   </main>
+
+  <!-- Month/week switch. Saved on the server, so clicking it from a phone or
+       computer on the LAN also switches the Pi's screen within ~15 seconds. -->
+  <div class="view-toggle" role="group" aria-label="Calendar view">
+    <button type="button" data-view="month">Month</button>
+    <button type="button" data-view="week">Week</button>
+  </div>
   <script src="dashboard.js"></script>
 </body>
 </html>

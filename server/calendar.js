@@ -4,10 +4,14 @@
  * expand recurring events, and bucket everything into days for the dashboard.
  *
  * Two layers:
- *   buildAgenda()    – pure function: parsed calendars + "now" → per-day event lists.
+ *   buildDays()      – pure function: parsed calendars + a date range → per-day event lists.
  *                      Easy to test with fixtures (see test/calendar.test.js).
  *   CalendarService  – fetches every few minutes, keeps the LAST GOOD copy of each
  *                      calendar in memory and on disk, never blanks the display.
+ *
+ * Views:
+ *   "month" – full weeks (Sun–Sat) covering the current month: 4–6 rows of 7 days
+ *   "week"  – the current week, Sun–Sat
  *
  * TIMEZONE NOTE: day boundaries use the process's local time, so the server
  * sets process.env.TZ to config.timezone at startup (see server/index.js).
@@ -22,6 +26,8 @@ const ical = require('node-ical');
 
 const FETCH_TIMEOUT_MS = 20_000;
 const STALE_AFTER_MS = 30 * 60 * 1000; // show "last updated" hint after 30 min
+const WEEK_STARTS_ON = 0; // 0 = Sunday, 1 = Monday
+const VIEWS = ['month', 'week'];
 
 // ---------------------------------------------------------------------------
 // Small date helpers (all in process-local time = config timezone)
@@ -30,6 +36,11 @@ const STALE_AFTER_MS = 30 * 60 * 1000; // show "last updated" hint after 30 min
 /** Local midnight of the given date, plus `days` days. DST-safe (uses calendar math). */
 function startOfDay(date, days = 0) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+}
+
+/** Local midnight of the first day of the week containing `date`. */
+function startOfWeek(date) {
+  return startOfDay(date, -((date.getDay() - WEEK_STARTS_ON + 7) % 7));
 }
 
 /** "2026-11-14" in local time. */
@@ -43,17 +54,46 @@ function daysBetween(a, b) {
   return Math.round((startOfDay(b) - startOfDay(a)) / 86_400_000);
 }
 
+const NARROW_NBSP = new RegExp(String.fromCharCode(0x202f), 'g');
+
 function makeFormatters(timezone) {
   const fmt = (opts) => new Intl.DateTimeFormat('en-US', { timeZone: timezone, ...opts });
   const time = fmt({ hour: 'numeric', minute: '2-digit' });
   const weekday = fmt({ weekday: 'long' });
   const monthDay = fmt({ month: 'short', day: 'numeric' });
-  // Intl uses a narrow no-break space before AM/PM; normalize to a plain space.
+  const monthYear = fmt({ month: 'long', year: 'numeric' });
+  // Intl puts a narrow no-break space before AM/PM; normalize to a plain space.
+  const t = (d) => time.format(d).replace(NARROW_NBSP, ' ');
   return {
-    time: (d) => time.format(d).replace(/ /g, ' '),
+    time: t,
+    /** Compact time for month cells: "9a", "4:30p", "12p". */
+    shortTime: (d) => t(d).replace(':00', '').replace(' AM', 'a').replace(' PM', 'p'),
     weekday: (d) => weekday.format(d),
     monthDay: (d) => monthDay.format(d),
+    monthYear: (d) => monthYear.format(d),
   };
+}
+
+/**
+ * The date range for a view.
+ * @returns {{start: Date, dayCount: number, title: string}}
+ */
+function viewRange(view, now, timezone) {
+  const f = makeFormatters(timezone);
+  if (view === 'week') {
+    const start = startOfWeek(now);
+    const end = startOfDay(start, 6);
+    const sameMonth = start.getMonth() === end.getMonth();
+    // "Nov 8 – 14, 2026" or "Nov 29 – Dec 5, 2026"
+    const title = `${f.monthDay(start)} – ${sameMonth ? end.getDate() : f.monthDay(end)}, ${end.getFullYear()}`;
+    return { start, dayCount: 7, title };
+  }
+  // Month: from the start of the week containing the 1st to the end of the week containing the last day.
+  const first = new Date(now.getFullYear(), now.getMonth(), 1);
+  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const start = startOfWeek(first);
+  const dayCount = daysBetween(start, startOfDay(startOfWeek(last), 7));
+  return { start, dayCount, title: f.monthYear(first) };
 }
 
 // ---------------------------------------------------------------------------
@@ -112,38 +152,49 @@ function overlapsDay(start, end, dayStart, dayEnd) {
 }
 
 /**
- * Build the dashboard's agenda.
+ * Build per-day event lists for a date range.
  *
  * @param {Array<{name:string,color:string,parsed:object}>} sources
- * @param {{now?:Date, daysAhead?:number, timezone:string}} opts
- * @returns {Array<{date, weekday, monthDay, relative, events:[]}>} one entry per day
+ * @param {object} opts
+ * @param {Date}   [opts.now]       current time (for "today"/"past" flags)
+ * @param {Date}   [opts.start]     first day shown (defaults to today)
+ * @param {number} [opts.dayCount]  number of days (default 7)
+ * @param {Date}   [opts.focusMonthOf] days outside this date's month get inMonth=false
+ * @param {string} opts.timezone
+ * @returns {Array<object>} one entry per day
  */
-function buildAgenda(sources, { now = new Date(), daysAhead = 7, timezone }) {
+function buildDays(sources, { now = new Date(), start, dayCount = 7, focusMonthOf, timezone }) {
   const f = makeFormatters(timezone);
-  const windowStart = startOfDay(now);
-  const windowEnd = startOfDay(now, daysAhead);
+  const first = startOfDay(start || now);
+  const windowEnd = startOfDay(first, dayCount);
+  const todayKey = dayKey(now);
+  const tomorrowKey = dayKey(startOfDay(now, 1));
+  const today = startOfDay(now);
 
   const days = [];
-  for (let i = 0; i < daysAhead; i++) {
-    const start = startOfDay(now, i);
+  for (let i = 0; i < dayCount; i++) {
+    const dStart = startOfDay(first, i);
+    const key = dayKey(dStart);
     days.push({
-      start,
-      end: startOfDay(now, i + 1),
+      start: dStart,
+      end: startOfDay(first, i + 1),
       info: {
-        date: dayKey(start),
-        weekday: f.weekday(start),
-        monthDay: f.monthDay(start),
-        relative: i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : null,
+        date: key,
+        dayOfMonth: dStart.getDate(),
+        weekday: f.weekday(dStart),
+        monthDay: f.monthDay(dStart),
+        relative: key === todayKey ? 'Today' : key === tomorrowKey ? 'Tomorrow' : null,
+        isToday: key === todayKey,
+        isPast: dStart < today,
+        inMonth: focusMonthOf ? dStart.getMonth() === focusMonthOf.getMonth() : true,
         events: [],
       },
     });
   }
 
   for (const src of sources) {
-    for (const ev of expandCalendar(src.parsed, windowStart, windowEnd)) {
-      const multiDay = ev.allDay
-        ? daysBetween(ev.start, ev.end) > 1
-        : dayKey(ev.start) !== dayKey(new Date(ev.end - 1));
+    for (const ev of expandCalendar(src.parsed, first, windowEnd)) {
+      const multiDay = ev.allDay && daysBetween(ev.start, ev.end) > 1;
       const totalDays = ev.allDay ? daysBetween(ev.start, ev.end) : null;
 
       for (const day of days) {
@@ -151,6 +202,7 @@ function buildAgenda(sources, { now = new Date(), daysAhead = 7, timezone }) {
 
         // Decide what to show in the "time" column for this particular day.
         let time;
+        let shortTime = null; // compact label for month cells; null = all day
         let note = null;
         let allDayToday = ev.allDay;
         if (ev.allDay) {
@@ -158,8 +210,10 @@ function buildAgenda(sources, { now = new Date(), daysAhead = 7, timezone }) {
           if (multiDay) note = `Day ${daysBetween(ev.start, day.start) + 1} of ${totalDays}`;
         } else if (ev.start >= day.start) {
           time = f.time(ev.start); // starts today
+          shortTime = f.shortTime(ev.start);
         } else if (ev.end <= day.end) {
           time = `Until ${f.time(ev.end)}`; // started earlier, ends today
+          shortTime = `→${f.shortTime(ev.end)}`;
         } else {
           time = 'All day'; // started earlier, ends later
           allDayToday = true;
@@ -171,6 +225,7 @@ function buildAgenda(sources, { now = new Date(), daysAhead = 7, timezone }) {
           color: src.color,
           allDay: allDayToday,
           time,
+          shortTime,
           note,
           start: ev.start.toISOString(),
           end: ev.end.toISOString(),
@@ -243,8 +298,8 @@ class CalendarService {
     this.fetchImpl = fetchImpl || fetch;
     /** id → { parsed, lastSuccess: Date|null, lastAttempt: Date|null, error: string|null } */
     this.state = new Map();
-    this.version = 0; // bumps whenever data changes, used to memoize the agenda
-    this.memo = null;
+    this.version = 0; // bumps whenever data or status changes, used to memoize
+    this.memo = new Map(); // view → { key, value }
     this.refreshing = null;
     this.timer = null;
   }
@@ -320,14 +375,14 @@ class CalendarService {
     clearInterval(this.timer);
   }
 
-  /** The JSON payload for GET /api/calendar. Contains no URLs. */
-  getAgenda(now = new Date()) {
+  /** Days + per-calendar status for a view. Memoized per view; contains no URLs. */
+  getView(view, now = new Date()) {
     const cfg = this.getConfig();
     const cals = this.enabledCalendars();
-    // Recompute only when data, config, or the day changes.
-    const memoKey = `${this.version}|${dayKey(now)}|${cfg.calendarDaysAhead}|` +
-      cals.map((c) => `${c.name}${c.color}`).join(',');
-    if (this.memo?.key === memoKey) return this.memo.value;
+    // Recompute only when data, config, view, or the day changes.
+    const memoKey = `${this.version}|${dayKey(now)}|` + cals.map((c) => `${c.name}${c.color}`).join(',');
+    const cached = this.memo.get(view);
+    if (cached?.key === memoKey) return cached.value;
 
     const sources = [];
     const status = [];
@@ -342,27 +397,37 @@ class CalendarService {
       });
     }
 
-    const days = buildAgenda(sources, { now, daysAhead: cfg.calendarDaysAhead, timezone: cfg.timezone });
+    const range = viewRange(view, now, cfg.timezone);
+    const days = buildDays(sources, {
+      now,
+      start: range.start,
+      dayCount: range.dayCount,
+      focusMonthOf: view === 'month' ? now : null,
+      timezone: cfg.timezone,
+    });
 
     // "updatedAt" = the OLDEST successful fetch among calendars, so staleness of any one shows.
     const successes = status.map((s) => s.lastSuccess);
     const updatedAt = successes.includes(null) ? null : successes.sort()[0] || null;
 
-    const value = { updatedAt, days, calendars: status };
-    this.memo = { key: memoKey, value };
+    const value = { view, title: range.title, updatedAt, days, calendars: status };
+    this.memo.set(view, { key: memoKey, value });
     return value;
   }
 
-  /** Staleness is computed per request, so it isn't frozen inside the memo. */
-  getPayload(now = new Date()) {
-    const agenda = this.getAgenda(now);
+  /** The JSON payload for GET /api/calendar. Staleness is computed per request. */
+  getPayload(view = 'month', now = new Date()) {
+    if (!VIEWS.includes(view)) view = 'month';
+    const data = this.getView(view, now);
     const isStale = (iso) => !iso || now - new Date(iso) > STALE_AFTER_MS;
     return {
-      ...agenda,
-      stale: agenda.calendars.length > 0 && isStale(agenda.updatedAt),
-      calendars: agenda.calendars.map((c) => ({ ...c, stale: isStale(c.lastSuccess) })),
+      ...data,
+      stale: data.calendars.length > 0 && isStale(data.updatedAt),
+      calendars: data.calendars.map((c) => ({ ...c, stale: isStale(c.lastSuccess) })),
     };
   }
 }
 
-module.exports = { buildAgenda, CalendarService, parseIcs, fetchIcs, calendarId, scrub, STALE_AFTER_MS };
+module.exports = {
+  buildDays, viewRange, CalendarService, parseIcs, fetchIcs, calendarId, scrub, STALE_AFTER_MS, VIEWS,
+};

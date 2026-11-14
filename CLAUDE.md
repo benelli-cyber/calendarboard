@@ -51,9 +51,12 @@ Family phones ──> http://<lxc-ip>:<port>/todo  (LAN now, Tailscale later)
 ### 2. Calendar
 - Sources: multiple Google Calendar **secret iCal URLs** from `config.json`, each with a display name and color
 - Fetch every **5 minutes** server-side; front end polls `/api/calendar`
-- Show **today** prominently, then the next **6 days** as an agenda list (configurable)
+- **Month view** (default): full Sun–Sat weeks covering the current month (4–6 rows), today's cell highlighted, past days and days outside the month dimmed
+- **Week view**: the current week (Sun–Sat) as 7 tall columns with larger text
+- Switch views via `display.calendarView` (`"month"` | `"week"`) in config, or the small **Month | Week** button at the bottom-right of the dashboard. The button saves the choice on the server (`POST /api/display`), so clicking it from any phone/computer on the LAN also switches the Pi within ~15 s
+- Days whose events don't fit in a cell show "+N more"
 - Correctly handle: recurring events, all-day events, multi-day events (show on each day spanned), cancelled instances, timezone conversion
-- Each event: color dot/bar, time (or "All day"), title
+- Each event: calendar color, time (or solid colored bar for all-day), title
 - **Resilience:** if a fetch fails, keep serving the last good data. Never show a blank calendar. Show a small, subtle "last updated" indicator if data is stale (>30 min).
 
 ### 3. Weather
@@ -78,7 +81,7 @@ Family phones ──> http://<lxc-ip>:<port>/todo  (LAN now, Tailscale later)
 
 ### 5. Settings Page (`/settings`)
 - Simple form, phone/desktop friendly
-- Edit: calendar names/colors/enabled, days ahead shown, weather location, theme (dark/light), font scale
+- Edit: calendar names/colors/enabled, calendar view (month/week), weather location, theme (dark/light), font scale
 - Saves to `config.json` (secret iCal URLs can be added but are masked when displayed)
 - Dashboard applies changes on next poll without a manual reload
 
@@ -86,13 +89,13 @@ Family phones ──> http://<lxc-ip>:<port>/todo  (LAN now, Tailscale later)
 Top to bottom:
 1. **Header:** clock + date (left), current weather (right)
 2. **Weather alert banner** (only when an alert is active)
-3. **Today:** today's events, largest text
-4. **Upcoming:** next 6 days, agenda style, grouped by day
-5. **5-day forecast strip**
-6. **To-Do list** (bottom section)
+3. **Calendar:** month grid or Sun–Sat week view (fills the remaining space)
+4. **5-day forecast strip**
+5. **To-Do list** (bottom section)
+- Small **Month | Week** toggle button in the bottom-right corner (inside the page margin)
 
 - Default **dark theme** (better on a 24/7 display); optional light theme
-- Base font size large (e.g., clock ~160px, event titles ~36–40px); scale via config
+- Base font size large (e.g., clock ~160px; month cells ~20px, week columns ~25px event titles); scale via config
 - Optional: dim mode on a schedule (e.g., 11 PM–6 AM) to reduce glare/burn-in
 
 ## Configuration (`config.json`, never committed)
@@ -103,7 +106,6 @@ Top to bottom:
   "calendars": [
     { "name": "Family", "url": "https://calendar.google.com/calendar/ical/.../basic.ics", "color": "#4FC3F7", "enabled": true }
   ],
-  "calendarDaysAhead": 7,
   "weather": {
     "lat": 0.0,
     "lon": 0.0,
@@ -113,12 +115,13 @@ Top to bottom:
   "display": {
     "theme": "dark",
     "fontScale": 1.0,
+    "calendarView": "month",
     "dimStart": "23:00",
     "dimEnd": "06:00"
   }
 }
 ```
-- Provide `config.example.json` (committed) with placeholders
+- Provide `config.example.json` (committed) with placeholders, and `config.demo.json` (committed) that reads the test fixtures
 - `config.json` and `*.db` go in `.gitignore`
 
 ## Security
@@ -158,7 +161,7 @@ family-dashboard/
 ```
 
 ## Build Phases (do one at a time; confirm each works before moving on)
-1. **Core:** Express server, config loading, clock/date, calendar from iCal with correct recurring-event handling, portrait layout. Viewable in a desktop browser at 1080×1920.
+1. **Core:** Express server, config loading, clock/date, calendar from iCal with correct recurring-event handling, month/week calendar views, portrait layout. Viewable in a desktop browser at 1080×1920.
 2. **Weather:** NWS + alerts + Open-Meteo fallback, caching, forecast strip
 3. **To-Do:** SQLite, `/todo` mobile page, dashboard section, PWA manifest
 4. **Settings page** + live config reload

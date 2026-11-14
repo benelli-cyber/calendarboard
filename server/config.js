@@ -17,10 +17,11 @@ const DEFAULTS = {
   host: '0.0.0.0',
   timezone: 'America/New_York',
   calendars: [],
-  calendarDaysAhead: 7,
   weather: { lat: 0, lon: 0, userAgent: 'family-dashboard', units: 'imperial' },
-  display: { theme: 'dark', fontScale: 1.0, dimStart: '23:00', dimEnd: '06:00' },
+  display: { theme: 'dark', fontScale: 1.0, calendarView: 'month', dimStart: '23:00', dimEnd: '06:00' },
 };
+
+const CALENDAR_VIEWS = ['month', 'week'];
 
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
@@ -43,12 +44,10 @@ function normalize(raw) {
     cfg.timezone = DEFAULTS.timezone;
   }
 
-  const days = Math.round(Number(cfg.calendarDaysAhead));
-  cfg.calendarDaysAhead = Number.isFinite(days) ? Math.min(Math.max(days, 1), 14) : 7;
-
   const scale = Number(cfg.display.fontScale);
   cfg.display.fontScale = Number.isFinite(scale) ? Math.min(Math.max(scale, 0.5), 2) : 1;
   if (!['dark', 'light'].includes(cfg.display.theme)) cfg.display.theme = 'dark';
+  if (!CALENDAR_VIEWS.includes(cfg.display.calendarView)) cfg.display.calendarView = 'month';
 
   cfg.calendars = (Array.isArray(cfg.calendars) ? cfg.calendars : [])
     .filter((c) => c && typeof c.url === 'string' && c.url.trim())
@@ -82,16 +81,31 @@ function loadConfig() {
 }
 
 /**
+ * Change config.json on disk and return the new normalized config.
+ *
+ * `mutate(raw)` edits the raw JSON object in place. We re-read the file first so
+ * nothing else in it (calendar URLs, unknown fields) is lost,
+ * and write to a temp file then rename, so a crash can never leave half a file.
+ */
+function updateConfig(mutate) {
+  const raw = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+  mutate(raw);
+  const tmp = `${CONFIG_PATH}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(raw, null, 2) + '\n');
+  fs.renameSync(tmp, CONFIG_PATH);
+  return normalize(raw);
+}
+
+/**
  * The subset of config that is safe to send to the browser.
  * Calendar URLs are deliberately left out.
  */
 function publicConfig(cfg) {
   return {
     timezone: cfg.timezone,
-    calendarDaysAhead: cfg.calendarDaysAhead,
     display: cfg.display,
     calendars: cfg.calendars.map(({ name, color, enabled }) => ({ name, color, enabled })),
   };
 }
 
-module.exports = { loadConfig, normalize, publicConfig, CONFIG_PATH, ROOT };
+module.exports = { loadConfig, updateConfig, normalize, publicConfig, CALENDAR_VIEWS, CONFIG_PATH, ROOT };

@@ -9,14 +9,18 @@
  */
 'use strict';
 
-const CONFIG_POLL_MS = 60 * 1000;
+const CONFIG_POLL_MS = 15 * 1000;   // also how fast the Pi follows the Month/Week button
 const CALENDAR_POLL_MS = 60 * 1000; // server refreshes from Google every 5 min
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const $ = (id) => document.getElementById(id);
 
 const state = {
   timezone: 'America/New_York',
+  view: 'month',          // 'month' | 'week'
   configJson: '',
+  configView: null,       // calendarView in the last config we applied
+  viewClickedAt: 0,       // ignore stale config polls right after a button click
   calendarJson: '',
 };
 
@@ -43,6 +47,13 @@ async function getJson(url) {
   return res.json();
 }
 
+/** Black or white text, whichever reads better on a calendar color like "#4FC3F7". */
+function textColorFor(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#000000' : '#ffffff';
+}
+
 // ---------------------------------------------------------------------------
 // Clock & date (always in the configured timezone, regardless of the Pi's)
 // ---------------------------------------------------------------------------
@@ -65,28 +76,80 @@ function tickClock() {
 }
 
 // ---------------------------------------------------------------------------
-// Config (theme, font scale, timezone) – polled so later settings changes apply live
+// Config (theme, font scale, timezone, calendar view) – polled so changes apply live
 // ---------------------------------------------------------------------------
+
+function applyConfig(cfg) {
+  const json = JSON.stringify(cfg);
+  if (json === state.configJson) return;
+  state.configJson = json;
+
+  document.body.className = cfg.display.theme === 'light' ? 'theme-light' : 'theme-dark';
+  document.documentElement.style.setProperty('--s', String(cfg.display.fontScale || 1));
+  if (cfg.timezone && cfg.timezone !== state.timezone) {
+    state.timezone = cfg.timezone;
+    makeClockFormatters();
+    tickClock();
+  }
+
+  // Follow the saved month/week setting when it changes (e.g. clicked on another device).
+  const view = cfg.display.calendarView;
+  if (view !== state.configView) {
+    state.configView = view;
+    if (view !== state.view) {
+      setView(view);
+      return; // setView reloads the calendar
+    }
+  }
+  // Sizes may have changed, so re-fit the calendar.
+  if (state.calendarJson) renderCalendar(JSON.parse(state.calendarJson));
+}
 
 async function loadConfig() {
   try {
+    const sentAt = Date.now();
     const cfg = await getJson('/api/config');
-    const json = JSON.stringify(cfg);
-    if (json === state.configJson) return;
-    state.configJson = json;
-
-    document.body.className = cfg.display.theme === 'light' ? 'theme-light' : 'theme-dark';
-    document.documentElement.style.setProperty('--s', String(cfg.display.fontScale || 1));
-    if (cfg.timezone && cfg.timezone !== state.timezone) {
-      state.timezone = cfg.timezone;
-      makeClockFormatters();
-      tickClock();
-    }
-    // Sizes may have changed, so re-fit the calendar lists.
-    if (state.calendarJson) renderCalendar(JSON.parse(state.calendarJson));
+    // A poll that started before a button click may carry the old view – skip it.
+    if (sentAt < state.viewClickedAt) return;
+    applyConfig(cfg);
   } catch (err) {
     console.warn('config:', err.message); // keep current settings
   }
+}
+
+// ---------------------------------------------------------------------------
+// Month/week toggle
+// ---------------------------------------------------------------------------
+
+const toggleButtons = document.querySelectorAll('.view-toggle button');
+
+function setView(view) {
+  state.view = view;
+  for (const b of toggleButtons) b.classList.toggle('active', b.dataset.view === view);
+  state.calendarJson = ''; // force a re-render for the new view
+  loadCalendar();
+}
+
+for (const button of toggleButtons) {
+  button.addEventListener('click', async () => {
+    const view = button.dataset.view;
+    if (view === state.view) return;
+    state.viewClickedAt = Date.now();
+    setView(view); // switch this screen immediately
+    try {
+      // Save on the server so the Pi (and any other open dashboard) follows.
+      const res = await fetch('/api/display', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ calendarView: view }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      state.configView = view;
+      applyConfig(await res.json());
+    } catch (err) {
+      console.warn('saving view:', err.message);
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -94,86 +157,69 @@ async function loadConfig() {
 // ---------------------------------------------------------------------------
 
 function eventItem(ev) {
-  const li = el('li', 'event');
-  const bar = el('span', 'event-bar');
-  bar.style.background = ev.color;
-  li.append(bar, el('span', 'event-time', ev.time), el('span', 'event-title', ev.title));
-  if (ev.note) li.append(el('span', 'event-note', ev.note));
+  const li = el('li', ev.allDay ? 'cev all-day' : 'cev');
+  li.style.setProperty('--ev-color', ev.color);
+  if (ev.allDay) {
+    // Solid colored bar; title only (multi-day events repeat on each day).
+    li.style.background = ev.color;
+    li.style.color = textColorFor(ev.color);
+    li.append(el('span', 'cev-title', ev.title));
+  } else if (state.view === 'month') {
+    const dot = el('span', 'cev-dot');
+    dot.style.background = ev.color;
+    li.append(dot, el('span', 'cev-time', ev.shortTime), el('span', 'cev-title', ev.title));
+  } else {
+    li.append(el('span', 'cev-time', ev.time), el('span', 'cev-title', ev.title));
+  }
   return li;
 }
 
 /**
- * Hide list items that don't fit inside `container` and add a "+N more" line.
- * `items` must be in display order. Runs only after a render, not every tick.
+ * If a day's events don't fit in its cell, hide them from the end and add "+N more".
+ * Only runs after a render (at most every few minutes), never per clock tick.
  */
-function fitItems(container, items, moreParent) {
-  if (!items.length) return;
-  const bottom = container.getBoundingClientRect().bottom -
-    parseFloat(getComputedStyle(container).paddingBottom);
-  // Hide day groups (upcoming) whose events are all hidden, so their headings take no space.
-  const hideEmptyDays = () => {
-    for (const day of container.querySelectorAll('.day')) {
-      day.hidden = !day.querySelector('.event:not([hidden])');
-    }
-  };
-
+function fitCell(list) {
+  if (list.scrollHeight <= list.clientHeight) return;
+  const items = [...list.children];
+  const more = el('li', 'more');
+  list.append(more);
   let hidden = 0;
-  for (const item of items) {
-    if (hidden || item.getBoundingClientRect().bottom > bottom) {
-      item.hidden = true;
-      hidden++;
-    }
-  }
-  if (!hidden) return;
-  hideEmptyDays();
-
-  // Add "+N more", then hide more events from the end until that line fits too.
-  const more = el('div', 'more', `+${hidden} more`);
-  (moreParent || container).append(more);
-  const visible = items.filter((i) => !i.hidden);
-  while (visible.length && more.getBoundingClientRect().bottom > bottom) {
-    visible.pop().hidden = true;
+  while (items.length && list.scrollHeight > list.clientHeight) {
+    items.pop().hidden = true;
     hidden++;
-    hideEmptyDays();
     more.textContent = `+${hidden} more`;
   }
 }
 
-function renderToday(day) {
-  const list = $('today-events');
-  list.replaceChildren();
-  if (!day || !day.events.length) {
-    list.append(el('li', 'empty', 'Nothing scheduled today'));
-    return;
-  }
-  const items = day.events.map(eventItem);
-  list.append(...items);
-  fitItems(list.parentElement, items, list);
+function renderWeekdayHeader() {
+  const row = $('cal-weekdays');
+  if (row.childElementCount) return; // static; build once
+  for (const name of WEEKDAYS) row.append(el('div', null, name));
 }
 
-function renderUpcoming(days) {
-  const wrap = $('upcoming-days');
-  wrap.replaceChildren();
-  const withEvents = days.filter((d) => d.events.length);
-  if (!withEvents.length) {
-    wrap.append(el('div', 'empty', `Nothing scheduled in the next ${days.length} days`));
-    return;
-  }
-  const items = [];
-  for (const day of withEvents) {
-    const group = el('div', 'day');
-    const heading = el('h3', 'day-heading', day.relative || day.weekday);
-    heading.append(el('span', 'day-date', day.monthDay));
-    const list = el('ul', 'events');
-    for (const ev of day.events) {
-      const li = eventItem(ev);
-      list.append(li);
-      items.push(li);
-    }
-    group.append(heading, list);
-    wrap.append(group);
-  }
-  fitItems(wrap, items);
+function renderGrid(data) {
+  const grid = $('cal-grid');
+  grid.className = `cal-grid view-${data.view}`;
+  grid.style.gridTemplateRows = `repeat(${Math.ceil(data.days.length / 7)}, minmax(0, 1fr))`;
+
+  const lists = [];
+  const cells = data.days.map((day) => {
+    let cls = 'cell';
+    if (day.isToday) cls += ' today';
+    else if (day.isPast) cls += ' past';
+    if (!day.inMonth) cls += ' other-month';
+    const cell = el('div', cls);
+    // Label the 1st of a month ("Dec 1") so month boundaries are obvious.
+    const label = day.dayOfMonth === 1 ? day.monthDay : String(day.dayOfMonth);
+    const list = el('ul', 'cell-events');
+    list.append(...day.events.map(eventItem));
+    cell.append(el('div', 'cell-date', label), list);
+    lists.push(list);
+    return cell;
+  });
+  grid.replaceChildren(...cells);
+  // Measure after everything is in the DOM (one layout pass, then fixes).
+  for (const list of lists) fitCell(list);
 }
 
 /** Small, subtle hint naming any calendar whose data is older than 30 minutes. */
@@ -194,14 +240,17 @@ function renderStale(data) {
 }
 
 function renderCalendar(data) {
-  renderToday(data.days[0]);
-  renderUpcoming(data.days.slice(1));
+  renderWeekdayHeader();
+  setText($('cal-title'), data.title);
+  renderGrid(data);
   renderStale(data);
 }
 
 async function loadCalendar() {
+  const view = state.view;
   try {
-    const data = await getJson('/api/calendar');
+    const data = await getJson(`/api/calendar?view=${view}`);
+    if (view !== state.view) return; // view changed while this request was in flight
     const json = JSON.stringify(data);
     if (json === state.calendarJson) return; // nothing changed → no DOM work
     state.calendarJson = json;
@@ -220,6 +269,8 @@ makeClockFormatters();
 tickClock();
 setInterval(tickClock, 1000);
 
-loadConfig().then(loadCalendar);
+// Apply the saved settings first, then draw the calendar in the saved view
+// (falls back to the default view if the server couldn't be reached).
+loadConfig().then(() => setView(state.view));
 setInterval(loadConfig, CONFIG_POLL_MS);
 setInterval(loadCalendar, CALENDAR_POLL_MS);

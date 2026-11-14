@@ -16,6 +16,7 @@
   --muted: #9aa4ae;
   --faint: #2a3038;
   --accent: #4fc3f7;
+  --today-bg: #16232e;
 }
 
 .theme-light {
@@ -25,9 +26,13 @@
   --muted: #555c63;
   --faint: #d9dcdf;
   --accent: #0277bd;
+  --today-bg: #e3f2fd;
 }
 
 * { box-sizing: border-box; }
+
+/* Make the hidden attribute win over any display: rule below. */
+[hidden] { display: none !important; }
 
 html, body {
   margin: 0;
@@ -37,7 +42,6 @@ html, body {
   color: var(--text);
   /* System fonts only (Raspberry Pi OS ships DejaVu / Liberation). */
   font-family: "DejaVu Sans", "Liberation Sans", system-ui, sans-serif;
-  cursor: none;
 }
 
 .dashboard {
@@ -96,7 +100,6 @@ html, body {
 .date {
   margin-top: calc(14px * var(--s));
   font-size: calc(56px * var(--s));
-  color: var(--text);
 }
 
 .current-weather {
@@ -116,37 +119,131 @@ html, body {
   font-weight: bold;
 }
 
-/* ---------- Event lists (shared) ---------- */
+/* ---------- 3. Calendar (month grid / week columns) ---------- */
 
-.events {
+.calendar {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(22px * var(--s)) calc(22px * var(--s));
+}
+
+.cal-header {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 20px;
+  padding: 0 calc(8px * var(--s)) calc(12px * var(--s));
+}
+
+.cal-title {
+  margin: 0;
+  font-size: calc(42px * var(--s));
+  font-weight: bold;
+}
+
+/* Subtle "last updated" hint when calendar data is old */
+.stale {
+  font-size: calc(20px * var(--s));
+  color: var(--muted);
+  text-align: right;
+}
+
+.cal-weekdays {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  padding-bottom: calc(6px * var(--s));
+  font-size: calc(22px * var(--s));
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* Thin grid lines come from the 2px gap showing the background through. */
+.cal-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  /* grid-template-rows is set by dashboard.js: one row per week */
+  gap: 2px;
+  background: var(--faint);
+  border: 2px solid var(--faint);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.cell {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--panel);
+  padding: calc(6px * var(--s)) calc(6px * var(--s)) 0;
+}
+
+.cell.past,
+.cell.other-month { opacity: 0.45; }
+
+.cell.today { background: var(--today-bg); }
+
+.cell-date {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  min-width: 1.6em;
+  padding: 0 0.25em;
+  border-radius: 0.8em;
+  text-align: center;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: calc(4px * var(--s));
+}
+
+.cell.today .cell-date {
+  background: var(--accent);
+  color: #000000;
+}
+
+.cell-events {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.event {
+.cev {
   display: flex;
   align-items: baseline;
-  gap: calc(22px * var(--s));
-  padding: calc(8px * var(--s)) 0;
+  gap: 0.25em;
+  min-width: 0;
+  margin-bottom: calc(3px * var(--s));
+  line-height: 1.2;
 }
 
-/* Colored bar identifying the calendar */
-.event-bar {
+/* Colored dot for timed events */
+.cev-dot {
   flex: 0 0 auto;
-  align-self: stretch;
-  width: calc(10px * var(--s));
-  border-radius: 5px;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  align-self: center;
 }
 
-.event-time {
-  white-space: nowrap;
+.cev-time {
   flex: 0 0 auto;
   color: var(--muted);
-  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.event-title {
+.cev-title {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
@@ -154,74 +251,44 @@ html, body {
   text-overflow: ellipsis;
 }
 
-.event-note {
-  flex: 0 0 auto;
-  color: var(--muted);
-}
-
-.more, .empty {
-  color: var(--muted);
-}
-
-/* ---------- 3. Today (largest event text) ---------- */
-
-.today {
-  flex: 0 1 auto;
-  max-height: 34%;
-  min-height: calc(190px * var(--s));
-  overflow: hidden;
-}
-
-.events-today .event { font-size: calc(42px * var(--s)); }
-.events-today .event-time { min-width: calc(300px * var(--s)); }
-.today .more, .today .empty { font-size: calc(36px * var(--s)); }
-
-/* ---------- 4. Upcoming ---------- */
-
-.upcoming {
-  flex: 1 1 0;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.upcoming-days {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.day + .day { margin-top: calc(14px * var(--s)); }
-
-.day-heading {
-  margin: 0;
-  padding-bottom: calc(4px * var(--s));
-  border-bottom: 2px solid var(--faint);
-  font-size: calc(32px * var(--s));
+/* All-day events: solid colored bar (text color set inline for contrast) */
+.cev.all-day {
+  padding: 0.05em 0.3em;
+  border-radius: 0.25em;
   font-weight: bold;
 }
 
-.day-heading .day-date {
-  font-weight: normal;
+.cell .more {
+  list-style: none;
   color: var(--muted);
-  margin-left: 0.4em;
+  white-space: nowrap;
 }
 
-.upcoming .event { font-size: calc(34px * var(--s)); padding: calc(5px * var(--s)) 0; }
-.upcoming .event-time { min-width: calc(250px * var(--s)); }
-.upcoming .more, .upcoming .empty { font-size: calc(30px * var(--s)); margin-top: calc(8px * var(--s)); }
+/* Month view: small cells, single-line events */
+.view-month .cell-date { font-size: calc(24px * var(--s)); }
+.view-month .cev,
+.view-month .more { font-size: calc(20px * var(--s)); }
 
-/* Subtle "last updated" hint when calendar data is old */
-.stale {
-  flex: 0 0 auto;
-  margin-top: calc(8px * var(--s));
-  font-size: calc(22px * var(--s));
-  color: var(--muted);
-  text-align: right;
+/* Week view: tall columns, bigger text, titles may wrap to 3 lines */
+.view-week .cell { padding: calc(10px * var(--s)) calc(8px * var(--s)) 0; }
+.view-week .cell-date { font-size: calc(36px * var(--s)); margin-bottom: calc(10px * var(--s)); }
+.view-week .cev { flex-direction: column; align-items: stretch; gap: 0; margin-bottom: calc(14px * var(--s)); }
+.view-week .cev-dot { display: none; }
+.view-week .cev-time { font-size: calc(20px * var(--s)); }
+.view-week .cev-title {
+  font-size: calc(25px * var(--s));
+  white-space: normal;
+  overflow-wrap: break-word; /* wrap between words; only split a word that can't fit at all */
+  hyphens: auto;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
+.view-week .cev:not(.all-day) { border-left: 6px solid var(--ev-color); padding-left: 6px; }
+.view-week .cev.all-day .cev-title { font-size: calc(22px * var(--s)); }
+.view-week .more { font-size: calc(22px * var(--s)); }
 
-/* ---------- 5 & 6. Forecast and to-dos (Phases 2–3) ---------- */
+/* ---------- 4 & 5. Forecast and to-dos (Phases 2–3) ---------- */
 
 .forecast {
   flex: 0 0 auto;
@@ -235,4 +302,31 @@ html, body {
   flex: 0 0 auto;
   height: calc(330px * var(--s));
   overflow: hidden;
+}
+
+/* ---------- Month/week toggle (bottom-right, inside the page margin) ---------- */
+
+.view-toggle {
+  position: fixed;
+  right: calc(56px * var(--s));
+  bottom: calc(8px * var(--s));
+  display: flex;
+  border: 1px solid var(--faint);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.view-toggle button {
+  font: inherit;
+  font-size: 18px;
+  padding: 4px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.view-toggle button.active {
+  background: var(--faint);
+  color: var(--text);
 }

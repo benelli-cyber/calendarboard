@@ -9,7 +9,6 @@
       "enabled": true
     }
   ],
-  "calendarDaysAhead": 7,
   "weather": {
     "lat": 0.0,
     "lon": 0.0,
@@ -19,6 +18,7 @@
   "display": {
     "theme": "dark",
     "fontScale": 1.0,
+    "calendarView": "month",
     "dimStart": "23:00",
     "dimEnd": "06:00"
   }
