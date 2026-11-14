@@ -1,0 +1,19 @@
+{
+  "name": "family-dashboard",
+  "version": "0.1.0",
+  "description": "Self-hosted family dashboard (DAKboard replacement)",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "node-ical": "^0.27.6"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  }
+}

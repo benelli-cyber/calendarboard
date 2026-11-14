@@ -1,0 +1,25 @@
+{
+  "port": 8080,
+  "timezone": "America/New_York",
+  "calendars": [
+    {
+      "name": "Family",
+      "url": "https://calendar.google.com/calendar/ical/REPLACE_ME/private-REPLACE_ME/basic.ics",
+      "color": "#4FC3F7",
+      "enabled": true
+    }
+  ],
+  "calendarDaysAhead": 7,
+  "weather": {
+    "lat": 0.0,
+    "lon": 0.0,
+    "userAgent": "family-dashboard (contact@example.com)",
+    "units": "imperial"
+  },
+  "display": {
+    "theme": "dark",
+    "fontScale": 1.0,
+    "dimStart": "23:00",
+    "dimEnd": "06:00"
+  }
+}
