@@ -24,6 +24,11 @@ const path = require('path');
 const express = require('express');
 const { loadConfig, updateConfig, publicConfig, CALENDAR_VIEWS, ROOT } = require('./config');
 const { toSettings, applySettings } = require('./settings');
+const pkg = require('../package.json');
+
+// Changes every time the server starts (e.g. after an update + restart).
+// Open dashboards see the new value and reload themselves to get the new code.
+const APP_VERSION = `${pkg.version}-${Date.now().toString(36)}`;
 
 /**
  * Build the Express app.
@@ -48,7 +53,7 @@ function createApp({ getConfig, setConfig, calendar, weather, todos }) {
   // so a random website can't add or delete to-dos on your LAN.
   const json = express.json({ limit: '4kb' });
 
-  app.get('/api/config', (req, res) => res.json(publicConfig(getConfig())));
+  app.get('/api/config', (req, res) => res.json({ ...publicConfig(getConfig()), appVersion: APP_VERSION }));
 
   app.get('/api/calendar', (req, res) => {
     const view = CALENDAR_VIEWS.includes(req.query.view) ? req.query.view : getConfig().display.calendarView;

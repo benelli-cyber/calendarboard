@@ -26,6 +26,7 @@ const state = {
   calendarJson: '',
   weatherJson: '',
   todoJson: '',
+  appVersion: null,       // server start id; a change means "reload for new code"
 };
 
 // ---------------------------------------------------------------------------
@@ -62,8 +63,9 @@ function textColorFor(hex) {
 // Clock & date (always in the configured timezone, regardless of the Pi's)
 // ---------------------------------------------------------------------------
 
-let timeFmt, dateFmt;
+let timeFmt, dateFmt, hourFmt;
 function makeClockFormatters() {
+  hourFmt = new Intl.DateTimeFormat('en-US', { timeZone: state.timezone, hour: 'numeric', hourCycle: 'h23' });
   timeFmt = new Intl.DateTimeFormat('en-US', { timeZone: state.timezone, hour: 'numeric', minute: '2-digit', hour12: true });
   dateFmt = new Intl.DateTimeFormat('en-US', { timeZone: state.timezone, weekday: 'long', month: 'long', day: 'numeric' });
 }
@@ -74,9 +76,39 @@ function tickClock() {
   const hm = parts.filter((p) => p.type === 'hour' || p.type === 'minute' || p.type === 'literal')
     .map((p) => p.value).join('').trim();
   const ampm = (parts.find((p) => p.type === 'dayPeriod') || {}).value || '';
+  if ($('clock-time').textContent !== hm) checkDailyReload(now); // once a minute
   setText($('clock-time'), hm);
   setText($('clock-ampm'), ampm);
   setText($('clock-date'), dateFmt.format(now));
+}
+
+// ---------------------------------------------------------------------------
+// Page reloads: daily at 3 AM (clears Chromium memory growth on the Pi), and
+// after the server is updated/restarted (to pick up new code).
+// ---------------------------------------------------------------------------
+
+const PAGE_LOADED_AT = Date.now();
+let reloading = false;
+
+/** Reload only if the server answers, so the kiosk never lands on an error page. */
+async function safeReload(reason) {
+  if (reloading) return;
+  try {
+    const res = await fetch('/api/health', { cache: 'no-store' });
+    if (!res.ok) return; // try again on the next check
+  } catch {
+    return; // server unreachable: keep showing the current page
+  }
+  reloading = true;
+  console.log(`Reloading page: ${reason}`);
+  location.reload();
+}
+
+function checkDailyReload(now) {
+  // Any minute during the 3 AM hour, but not if the page was loaded less than
+  // an hour ago (so it reloads once, and keeps retrying if the server is down).
+  if (Date.now() - PAGE_LOADED_AT < 60 * 60 * 1000) return;
+  if (Number(hourFmt.format(now)) === 3) safeReload('daily 3 AM reload');
 }
 
 // ---------------------------------------------------------------------------
@@ -88,6 +120,13 @@ function applyConfig(cfg) {
   if (json === state.configJson) return;
   const firstLoad = !state.configJson;
   state.configJson = json;
+
+  // The server restarted (usually an update): reload to get the new code.
+  if (state.appVersion && cfg.appVersion && cfg.appVersion !== state.appVersion) {
+    safeReload('server was updated');
+    return;
+  }
+  state.appVersion = cfg.appVersion;
 
   // Settings were saved (calendars, colors, weather location…): fetch fresh data now
   // instead of waiting for the next poll. Weather gets a second look a bit later,
