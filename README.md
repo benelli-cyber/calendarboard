@@ -4,7 +4,7 @@ A self-hosted replacement for DAKboard. The server runs on the Proxmox LXC; the
 Raspberry Pi 3B just shows `http://<lxc-ip>:8080/` in Chromium kiosk mode
 (portrait, 1080×1920). See `CLAUDE.md` for the full spec and build phases.
 
-**Status:** Phase 2 done (clock, month/week calendar, weather with alerts). Next: to-do list.
+**Status:** Phase 3 done (clock, month/week calendar, weather with alerts, shared to-do list). Next: settings page.
 
 ## Requirements
 - Node.js 20+ (LTS)
@@ -69,6 +69,24 @@ browser, and the URLs are never written to logs.
   30 minutes gets a small "Last updated" note.
 - If a day's events don't fit in its cell, the extra ones collapse into "+N more".
 
+## Shared to-do list
+- On any phone on the home network, open `http://<lxc-ip>:8080/todo`. Add
+  items, tap the box to check one off, tap ✕ to delete (asks first).
+  Optionally type your name at the bottom; your phone remembers it and shows it
+  under the items you add.
+- The dashboard shows open items (newest first), then checked items, struck
+  through, for 24 hours. It picks up changes within ~20 seconds; open phone
+  pages re-sync every 15 seconds.
+- Stored in SQLite at `data/todos.db` (git-ignored). Checked items older than
+  30 days are deleted automatically. Override the location with `TODO_DB=...`.
+- **Add to Home Screen:**
+  - **iPhone (Safari):** Share → *Add to Home Screen*. It opens full-screen
+    like an app, with its own icon.
+  - **Android (Chrome):** ⋮ → *Add to Home screen*. Over plain `http://` on
+    the LAN, Chrome adds a shortcut that opens in a browser tab; the
+    full-screen "install as app" mode needs HTTPS, which the Tailscale phase
+    can provide.
+
 ## How the weather works
 - **Primary:** National Weather Service (`api.weather.gov`) for your exact
   lat/lon (US only). Current conditions come from the nearest weather
@@ -92,4 +110,8 @@ browser, and the URLs are never written to logs.
 | `GET /api/calendar` | Days for `?view=month` or `?view=week`, per-calendar status |
 | `POST /api/display` | `{"calendarView":"week"}`: saves the view (used by the button) |
 | `GET /api/weather`  | Current conditions, today, 5-day forecast, alerts |
+| `GET /api/todos`    | Open items + items checked in the last 24 h |
+| `POST /api/todos`   | `{"text":"Milk","addedBy":"Mom"}` → new item |
+| `PATCH /api/todos/:id` | `{"done":true}` or `{"done":false}`      |
+| `DELETE /api/todos/:id` | Delete an item                          |
 | `GET /api/health`   | `{ ok: true }`                              |

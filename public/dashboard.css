@@ -427,8 +427,65 @@ html, body {
 .todos {
   flex: 1 1 0;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
+
+.todo-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: calc(28px * var(--s));
+  line-height: 1.2;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: calc(1px * var(--s)) 0;
+  min-width: 0;
+}
+
+/* Checkbox drawn with CSS (read-only on the dashboard) */
+.todo-box {
+  flex: 0 0 auto;
+  width: 0.8em;
+  height: 0.8em;
+  border: 3px solid var(--muted);
+  border-radius: 0.18em;
+}
+
+.todo-item.done .todo-box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.todo-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.todo-item.done .todo-text {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.todo-list .more,
+.todo-list .empty {
+  color: var(--muted);
+  font-size: calc(22px * var(--s));
+}
+
+/* Tighter title in the to-do panel to make room for a 4th item */
+.todos .section-title { margin-bottom: calc(4px * var(--s)); }
 
 /* ---------- Month/week toggle (bottom-right, inside the page margin) ---------- */
 

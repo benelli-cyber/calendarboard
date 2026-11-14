@@ -1,0 +1,15 @@
+{
+  "name": "Family To-Do",
+  "short_name": "To-Do",
+  "description": "Shared family to-do list",
+  "start_url": "/todo",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#111418",
+  "icons": [
+    { "src": "/icons/app-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/app-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/app-icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

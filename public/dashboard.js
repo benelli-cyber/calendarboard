@@ -12,6 +12,7 @@
 const CONFIG_POLL_MS = 15 * 1000;   // also how fast the Pi follows the Month/Week button
 const CALENDAR_POLL_MS = 60 * 1000; // server refreshes from Google every 5 min
 const WEATHER_POLL_MS = 2 * 60 * 1000; // server refreshes weather every 15 min, alerts every 5
+const TODO_POLL_MS = 20 * 1000;        // phone edits show up within ~20 s
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const $ = (id) => document.getElementById(id);
@@ -24,6 +25,7 @@ const state = {
   viewClickedAt: 0,       // ignore stale config polls right after a button click
   calendarJson: '',
   weatherJson: '',
+  todoJson: '',
 };
 
 // ---------------------------------------------------------------------------
@@ -391,6 +393,37 @@ async function loadWeather() {
 }
 
 // ---------------------------------------------------------------------------
+// To-do list (read-only here; edited on phones at /todo)
+// ---------------------------------------------------------------------------
+
+function renderTodos(items) {
+  const list = $('todo-list');
+  if (!items.length) {
+    list.replaceChildren(el('li', 'empty', `Nothing to do. Add items at ${location.host}/todo`));
+    return;
+  }
+  // Server order: open items (newest first), then items checked in the last 24 h.
+  list.replaceChildren(...items.map((item) => {
+    const li = el('li', item.done ? 'todo-item done' : 'todo-item');
+    li.append(el('span', 'todo-box'), el('span', 'todo-text', item.text));
+    return li;
+  }));
+  fitCell(list); // "+N more" when there are more items than fit
+}
+
+async function loadTodos() {
+  try {
+    const { items } = await getJson('/api/todos');
+    const json = JSON.stringify(items);
+    if (json === state.todoJson) return; // nothing changed → no DOM work
+    state.todoJson = json;
+    renderTodos(items);
+  } catch (err) {
+    console.warn('todos:', err.message); // keep showing the last list
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Start
 // ---------------------------------------------------------------------------
 
@@ -406,3 +439,6 @@ setInterval(loadCalendar, CALENDAR_POLL_MS);
 
 loadWeather();
 setInterval(loadWeather, WEATHER_POLL_MS);
+
+loadTodos();
+setInterval(loadTodos, TODO_POLL_MS);

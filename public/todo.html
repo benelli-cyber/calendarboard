@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Family To-Do</title>
+
+  <!-- "Add to Home Screen" support (Android: manifest; iPhone: apple-* tags) -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#111418">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="To-Do">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" href="/icons/app-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+
+  <style>
+    :root {
+      --bg: #000000;
+      --panel: #111418;
+      --text: #ffffff;
+      --muted: #9aa4ae;
+      --faint: #2a3038;
+      --accent: #4fc3f7;
+      --danger: #ef5350;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--text); }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 20px;
+      line-height: 1.3;
+      /* Respect the iPhone notch / home bar when opened from the home screen */
+      padding: calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right))
+               calc(24px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+      max-width: 640px;
+      margin: 0 auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+    header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+    h1 { margin: 0; font-size: 34px; }
+    #count { color: var(--muted); }
+
+    /* Add form */
+    form { display: flex; gap: 10px; margin-bottom: 18px; }
+    input {
+      font: inherit;
+      color: var(--text);
+      background: var(--panel);
+      border: 2px solid var(--faint);
+      border-radius: 12px;
+      padding: 12px 14px;
+      min-width: 0;
+    }
+    input:focus { outline: none; border-color: var(--accent); }
+    #add-text { flex: 1; min-height: 56px; }
+    button { font: inherit; cursor: pointer; }
+    .add-btn {
+      min-width: 84px;
+      min-height: 56px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #000;
+      font-weight: bold;
+    }
+    .add-btn:disabled { opacity: 0.5; }
+
+    .error {
+      background: #4a1414;
+      color: #ffcdd2;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+    }
+
+    /* Items */
+    .list { list-style: none; margin: 0; padding: 0; }
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 64px;
+      border-bottom: 1px solid var(--faint);
+    }
+    .check, .del {
+      flex: 0 0 auto;
+      width: 56px;
+      height: 56px;
+      border: 0;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .check::before {
+      content: "";
+      width: 28px;
+      height: 28px;
+      border: 3px solid var(--muted);
+      border-radius: 8px;
+    }
+    .done .check::before {
+      background: var(--accent);
+      border-color: var(--accent);
+      /* check mark */
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-size: 22px;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .text { flex: 1; min-width: 0; overflow-wrap: anywhere; padding: 8px 0; }
+    .by { display: block; font-size: 15px; color: var(--muted); }
+    .done .text { color: var(--muted); text-decoration: line-through; }
+    .del { color: var(--muted); font-size: 24px; }
+    .del:active { color: var(--danger); }
+
+    h2 { font-size: 17px; color: var(--muted); font-weight: normal; margin: 28px 0 4px; }
+    .empty { color: var(--muted); text-align: center; padding: 30px 0; }
+
+    footer {
+      margin-top: 36px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 17px;
+    }
+    footer label { display: flex; align-items: center; gap: 8px; }
+    footer input { width: 150px; padding: 8px 10px; font-size: 17px; }
+    footer a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>To-Do</h1>
+    <span id="count"></span>
+  </header>
+
+  <form id="add-form" autocomplete="off">
+    <input id="add-text" maxlength="200" placeholder="Add an item…" enterkeyhint="done" aria-label="New item">
+    <button class="add-btn" type="submit">Add</button>
+  </form>
+
+  <div id="error" class="error" hidden></div>
+
+  <ul id="open-list" class="list"></ul>
+  <p id="empty" class="empty" hidden>Nothing on the list.</p>
+
+  <h2 id="done-heading" hidden>Checked off (clears after 24 hours)</h2>
+  <ul id="done-list" class="list"></ul>
+
+  <footer>
+    <label>Your name <input id="name" maxlength="30" placeholder="optional" autocomplete="given-name"></label>
+    <a href="/">Dashboard</a>
+  </footer>
+
+  <script src="todo.js"></script>
+</body>
+</html>
