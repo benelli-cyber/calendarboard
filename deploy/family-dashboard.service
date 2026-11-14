@@ -1,0 +1,49 @@
+# systemd unit for the Family Dashboard (runs on the Proxmox LXC).
+#
+# Install (see deploy/INSTALL.md for the full steps):
+#   sudo cp deploy/family-dashboard.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now family-dashboard
+#
+# Logs:     journalctl -u family-dashboard -f
+# Restart:  sudo systemctl restart family-dashboard
+
+[Unit]
+Description=Family Dashboard (calendar, weather, to-do)
+Documentation=file:///opt/family-dashboard/deploy/INSTALL.md
+# Wait for the network so the first calendar/weather fetch can succeed.
+Wants=network-online.target
+After=network-online.target
+# Never stop retrying after repeated quick failures (pairs with Restart=always).
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=familydash
+Group=familydash
+WorkingDirectory=/opt/family-dashboard
+# If `which node` prints a different path on your LXC, change it here.
+ExecStart=/usr/bin/node server/index.js
+Environment=NODE_ENV=production
+
+# Restart automatically if it crashes.
+Restart=always
+RestartSec=5
+
+# ---- Hardening: the app can only write inside its own folder ----
+# (config.json is saved by writing a temp file next to it, then renaming,
+#  and data/ holds the to-do database and calendar/weather caches.)
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/family-dashboard
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target
