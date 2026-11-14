@@ -49,7 +49,7 @@ browser, and the URLs are never written to logs.
 
 ## How the calendar works
 - **Views:** `display.calendarView` is `"month"` (full Sun–Sat weeks covering
-  the month) or `"week"` (this Sun–Sat week as 7 tall columns). Change it in
+  the month) or `"week"` (today + the next 6 days as 7 tall columns). Change it in
   `config.json` or with the on-screen button.
 - The server fetches every enabled calendar every **5 minutes**
   (`server/calendar.js`). The dashboard polls `/api/calendar` every minute.

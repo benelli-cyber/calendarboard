@@ -289,7 +289,7 @@ html, body {
 .view-week .cell-date { font-size: calc(36px * var(--s)); margin-bottom: calc(10px * var(--s)); }
 .view-week .cev { flex-direction: column; align-items: stretch; gap: 0; margin-bottom: calc(14px * var(--s)); }
 .view-week .cev-dot { display: none; }
-.view-week .cev-time { font-size: calc(20px * var(--s)); }
+.view-week .cev-time { font-size: calc(20px * var(--s)); white-space: normal; }
 .view-week .cev-title {
   font-size: calc(25px * var(--s));
   white-space: normal;

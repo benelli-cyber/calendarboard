@@ -52,7 +52,7 @@ Family phones ──> http://<lxc-ip>:<port>/todo  (LAN now, Tailscale later)
 - Sources: multiple Google Calendar **secret iCal URLs** from `config.json`, each with a display name and color
 - Fetch every **5 minutes** server-side; front end polls `/api/calendar`
 - **Month view** (default): full Sun–Sat weeks covering the current month (4–6 rows), today's cell highlighted, past days and days outside the month dimmed
-- **Week view**: the current week (Sun–Sat) as 7 tall columns with larger text
+- **Week view**: rolling 7 days (today + next 6) as 7 tall columns with larger text; today is always the first column
 - Switch views via `display.calendarView` (`"month"` | `"week"`) in config, or the small **Month | Week** button at the bottom-right of the dashboard. The button saves the choice on the server (`POST /api/display`), so clicking it from any phone/computer on the LAN also switches the Pi within ~15 s
 - Days whose events don't fit in a cell show "+N more"
 - Correctly handle: recurring events, all-day events, multi-day events (show on each day spanned), cancelled instances, timezone conversion
@@ -89,7 +89,7 @@ Family phones ──> http://<lxc-ip>:<port>/todo  (LAN now, Tailscale later)
 Top to bottom:
 1. **Header:** compact clock (~120px) + date (left), current weather (right)
 2. **Weather alert banner** (only when an alert is active)
-3. **Calendar:** month grid or Sun–Sat week view. **Gets priority for space** (fills everything not used by the other sections)
+3. **Calendar:** month grid (Sun–Sat rows) or rolling 7-day week view. **Gets priority for space** (fills everything not used by the other sections)
 4. **Bottom row (~250px), side by side:** 5-day forecast (left, ~55%) | To-Do list (right, ~45%, sized for 2–4 items)
 - Small **Month | Week** toggle button in the bottom-right corner (inside the page margin)
 

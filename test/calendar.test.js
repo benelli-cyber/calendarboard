@@ -116,13 +116,13 @@ test('month view: whole Sun–Sat weeks covering the month', () => {
   assert.equal(viewRange('month', new Date('2026-02-10T12:00:00-05:00'), TZ).dayCount, 28);
 });
 
-test('week view: Sun–Sat week containing today', () => {
+test('week view: rolling 7 days starting today', () => {
   const r = viewRange('week', NOW, TZ);
-  assert.equal(r.start.toDateString(), 'Sun Nov 08 2026');
+  assert.equal(r.start.toDateString(), 'Sat Nov 14 2026');
   assert.equal(r.dayCount, 7);
-  assert.equal(r.title, 'Nov 8 – 14, 2026');
-  const cross = viewRange('week', new Date('2026-12-01T12:00:00-05:00'), TZ);
-  assert.equal(cross.title, 'Nov 29 – Dec 5, 2026');
+  assert.equal(r.title, 'Nov 14 – 20, 2026');
+  const cross = viewRange('week', new Date('2026-11-27T12:00:00-05:00'), TZ);
+  assert.equal(cross.title, 'Nov 27 – Dec 3, 2026');
 });
 
 test('month grid: flags for today, past days, and days outside the month', () => {

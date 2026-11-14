@@ -192,10 +192,15 @@ function fitCell(list) {
   }
 }
 
-function renderWeekdayHeader() {
+/** Weekday labels above the grid. Month view always starts on Sunday; the
+ *  rolling week starts on today, so its labels come from the days themselves. */
+function renderWeekdayHeader(data) {
+  const labels = data.view === 'week'
+    ? data.days.slice(0, 7).map((d) => d.weekday.slice(0, 3))
+    : WEEKDAYS;
   const row = $('cal-weekdays');
-  if (row.childElementCount) return; // static; build once
-  for (const name of WEEKDAYS) row.append(el('div', null, name));
+  if (row.textContent === labels.join('')) return; // unchanged
+  row.replaceChildren(...labels.map((name) => el('div', null, name)));
 }
 
 function renderGrid(data) {
@@ -241,7 +246,7 @@ function renderStale(data) {
 }
 
 function renderCalendar(data) {
-  renderWeekdayHeader();
+  renderWeekdayHeader(data);
   setText($('cal-title'), data.title);
   renderGrid(data);
   renderStale(data);

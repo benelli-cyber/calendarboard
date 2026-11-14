@@ -11,7 +11,7 @@
  *
  * Views:
  *   "month" – full weeks (Sun–Sat) covering the current month: 4–6 rows of 7 days
- *   "week"  – the current week, Sun–Sat
+ *   "week"  – rolling: today + the next 6 days
  *
  * TIMEZONE NOTE: day boundaries use the process's local time, so the server
  * sets process.env.TZ to config.timezone at startup (see server/index.js).
@@ -81,10 +81,10 @@ function makeFormatters(timezone) {
 function viewRange(view, now, timezone) {
   const f = makeFormatters(timezone);
   if (view === 'week') {
-    const start = startOfWeek(now);
+    const start = startOfDay(now); // rolling week: today is always the first column
     const end = startOfDay(start, 6);
     const sameMonth = start.getMonth() === end.getMonth();
-    // "Nov 8 – 14, 2026" or "Nov 29 – Dec 5, 2026"
+    // "Nov 14 – 20, 2026" or "Nov 29 – Dec 5, 2026"
     const title = `${f.monthDay(start)} – ${sameMonth ? end.getDate() : f.monthDay(end)}, ${end.getFullYear()}`;
     return { start, dayCount: 7, title };
   }
