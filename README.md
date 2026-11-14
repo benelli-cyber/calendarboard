@@ -4,7 +4,9 @@ A self-hosted replacement for DAKboard. The server runs on the Proxmox LXC; the
 Raspberry Pi 3B just shows `http://<lxc-ip>:8080/` in Chromium kiosk mode
 (portrait, 1080×1920). See `CLAUDE.md` for the full spec and build phases.
 
-**Status:** Phase 4 done (clock, month/week calendar, weather with alerts, shared to-do list, settings page). Next: deploy to the LXC.
+**Status:** Phase 5 done (all features + deployment files). Next: remote access with Tailscale.
+
+**Installing on the LXC and Pi:** see [`deploy/INSTALL.md`](deploy/INSTALL.md).
 
 ## Requirements
 - Node.js 20+ (LTS)
@@ -43,6 +45,12 @@ see the "Last updated" hint for a calendar that keeps failing.
 
 `config.json` holds the secret URLs. It is git-ignored, is never sent to the
 browser, and the URLs are never written to logs.
+
+## Automatic page reloads
+The dashboard reloads itself once a night around 3 AM (clears Chromium's memory
+growth on the Pi), and within ~15 seconds after the server restarts (so an
+update reaches the Pi without touching it). Both first check that the server
+answers, so the screen never lands on an error page.
 
 ## Commands
 

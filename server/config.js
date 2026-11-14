@@ -87,12 +87,16 @@ function loadConfig() {
  * `mutate(raw)` edits the raw JSON object in place. We re-read the file first so
  * nothing else in it (calendar URLs, unknown fields) is lost,
  * and write to a temp file then rename, so a crash can never leave half a file.
+ * The new file gets the SAME permissions as the old one (e.g. 600), because
+ * config.json holds the secret calendar URLs.
  */
 function updateConfig(mutate) {
   const raw = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
   mutate(raw);
+  const mode = fs.statSync(CONFIG_PATH).mode & 0o777;
   const tmp = `${CONFIG_PATH}.tmp`;
-  fs.writeFileSync(tmp, JSON.stringify(raw, null, 2) + '\n');
+  fs.writeFileSync(tmp, JSON.stringify(raw, null, 2) + '\n', { mode });
+  fs.chmodSync(tmp, mode); // exact mode, regardless of the process umask
   fs.renameSync(tmp, CONFIG_PATH);
   return normalize(raw);
 }

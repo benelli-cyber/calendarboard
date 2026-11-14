@@ -33,6 +33,18 @@ test('updateConfig changes one field and keeps everything else (incl. secret URL
   assert.ok(!fs.existsSync(`${process.env.CONFIG_PATH}.tmp`), 'temp file cleaned up');
 });
 
+test('updateConfig keeps the file private (chmod 600 survives a save)', () => {
+  fs.writeFileSync(process.env.CONFIG_PATH, JSON.stringify({ display: {} }));
+  fs.chmodSync(process.env.CONFIG_PATH, 0o600);
+  const oldUmask = process.umask(0o002); // a permissive umask, like many systems
+  try {
+    updateConfig((raw) => { raw.display.calendarView = 'week'; });
+  } finally {
+    process.umask(oldUmask);
+  }
+  assert.equal(fs.statSync(process.env.CONFIG_PATH).mode & 0o777, 0o600);
+});
+
 test('normalize falls back to month for an unknown view', () => {
   assert.equal(normalize({ display: { calendarView: 'year' } }).display.calendarView, 'month');
   assert.equal(normalize({}).display.calendarView, 'month');

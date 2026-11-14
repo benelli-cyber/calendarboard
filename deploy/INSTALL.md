@@ -57,7 +57,7 @@ expects `/usr/bin/node`. If yours differs, edit `ExecStart` in step 1.6.
 The app runs as its own user with no login and no special rights:
 
 ```bash
-useradd --system --home /opt/family-dashboard --shell /usr/sbin/nologin familydash
+useradd --system --create-home --home-dir /var/lib/familydash --shell /usr/sbin/nologin familydash
 ```
 ```bash
 git clone https://github.com/benelli-cyber/calendarboard.git /opt/family-dashboard

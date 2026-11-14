@@ -33,6 +33,8 @@ RestartSec=5
 # ---- Hardening: the app can only write inside its own folder ----
 # (config.json is saved by writing a temp file next to it, then renaming,
 #  and data/ holds the to-do database and calendar/weather caches.)
+# New files (config.json saves, the to-do database) are readable by this user only.
+UMask=0077
 NoNewPrivileges=true
 ProtectSystem=strict
 ReadWritePaths=/opt/family-dashboard
