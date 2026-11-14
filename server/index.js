@@ -12,6 +12,9 @@
  *   POST /api/todos        { text, addedBy? } → new item
  *   PATCH /api/todos/:id   { done: true|false }
  *   DELETE /api/todos/:id
+ *   GET  /api/settings     editable settings (calendar URLs masked)
+ *   PUT  /api/settings     save settings to config.json; applied live
+ *   GET  /settings         settings page (public/settings.html)
  *   GET  /api/health       simple status check
  *
  * Run directly (`node server/index.js`) to start the server. Tests import
@@ -20,6 +23,7 @@
 const path = require('path');
 const express = require('express');
 const { loadConfig, updateConfig, publicConfig, CALENDAR_VIEWS, ROOT } = require('./config');
+const { toSettings, applySettings } = require('./settings');
 
 /**
  * Build the Express app.
@@ -102,10 +106,34 @@ function createApp({ getConfig, setConfig, calendar, weather, todos }) {
     res.status(204).end();
   }));
 
+  // ----- Settings -----
+
+  app.get('/api/settings', (req, res) => res.json(toSettings(getConfig())));
+
+  app.put('/api/settings', json, (req, res) => {
+    let saved;
+    try {
+      // Validation happens inside updateConfig's callback: if anything is
+      // invalid it throws before the file is written, so nothing changes.
+      saved = updateConfig((raw) => applySettings(raw, req.body));
+    } catch (err) {
+      if (err.status === 400) return res.status(400).json({ error: err.message, field: err.field });
+      console.error(`[settings] Could not save: ${err.message}`);
+      return res.status(500).json({ error: 'Could not save settings' });
+    }
+    setConfig(saved);
+    console.log('[settings] Saved');
+    // Apply right away: fetch any new/changed calendars, refresh weather if the location moved.
+    calendar.refreshAll?.();
+    weather.onConfigChange?.();
+    res.json(toSettings(saved));
+  });
+
   app.get('/api/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
   // Pages
   app.get('/todo', (req, res) => res.sendFile(path.join(ROOT, 'public', 'todo.html')));
+  app.get('/settings', (req, res) => res.sendFile(path.join(ROOT, 'public', 'settings.html')));
 
   // No long-lived caching: ETags make reloads cheap, and updates show up immediately.
   app.use(express.static(path.join(ROOT, 'public')));

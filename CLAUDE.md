@@ -83,7 +83,8 @@ Family phones ──> http://<lxc-ip>:<port>/todo  (LAN now, Tailscale later)
 - Simple form, phone/desktop friendly
 - Edit: calendar names/colors/enabled, calendar view (month/week), weather location, theme (dark/light), font scale
 - Saves to `config.json` (secret iCal URLs can be added but are masked when displayed)
-- Dashboard applies changes on next poll without a manual reload
+- Dashboard applies changes on next poll without a manual reload (`/api/config` carries a `revision` hash; when it changes the dashboard re-fetches calendar + weather)
+- Weather location accepts coordinates pasted from Google Maps; the page shows live weather to confirm the location
 
 ## Portrait Layout (1080×1920)
 Top to bottom:

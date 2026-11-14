@@ -4,7 +4,7 @@ A self-hosted replacement for DAKboard. The server runs on the Proxmox LXC; the
 Raspberry Pi 3B just shows `http://<lxc-ip>:8080/` in Chromium kiosk mode
 (portrait, 1080×1920). See `CLAUDE.md` for the full spec and build phases.
 
-**Status:** Phase 3 done (clock, month/week calendar, weather with alerts, shared to-do list). Next: settings page.
+**Status:** Phase 4 done (clock, month/week calendar, weather with alerts, shared to-do list, settings page). Next: deploy to the LXC.
 
 ## Requirements
 - Node.js 20+ (LTS)
@@ -69,6 +69,23 @@ browser, and the URLs are never written to logs.
   30 minutes gets a small "Last updated" note.
 - If a day's events don't fit in its cell, the extra ones collapse into "+N more".
 
+## Settings page
+Open `http://<lxc-ip>:8080/settings` on a phone or computer on the home network.
+- **Calendars:** rename, recolor, show/hide, remove, add a new one (paste its
+  secret iCal address), or replace an address. Saved addresses stay on the
+  server; the page only ever shows a shortened version
+  (`calendar.google.com/…/basic.ics`).
+- **Display:** month or week view, dark or light theme, text size.
+- **Weather:** paste your coordinates straight from Google Maps
+  (`38.8894, -77.0352` or `38.8894° N, 77.0352° W`) and a contact for
+  weather.gov. The page shows the current weather so you can confirm it works.
+- Saving writes `config.json` (other settings, like the port, are kept) and
+  the dashboard picks up the change within ~15 seconds, with no reload. Invalid
+  entries are highlighted and nothing is saved.
+- Like the to-do list, the settings page has no password: anyone on your home
+  network (or, later, your Tailscale network) can open it.
+- Editing `config.json` by hand still works, but needs a restart to apply.
+
 ## Shared to-do list
 - On any phone on the home network, open `http://<lxc-ip>:8080/todo`. Add
   items, tap the box to check one off, tap ✕ to delete (asks first).
@@ -114,4 +131,6 @@ browser, and the URLs are never written to logs.
 | `POST /api/todos`   | `{"text":"Milk","addedBy":"Mom"}` → new item |
 | `PATCH /api/todos/:id` | `{"done":true}` or `{"done":false}`      |
 | `DELETE /api/todos/:id` | Delete an item                          |
+| `GET /api/settings` | Editable settings (calendar URLs masked)    |
+| `PUT /api/settings` | Save settings (used by the settings page)   |
 | `GET /api/health`   | `{ ok: true }`                              |

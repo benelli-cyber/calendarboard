@@ -86,7 +86,18 @@ function tickClock() {
 function applyConfig(cfg) {
   const json = JSON.stringify(cfg);
   if (json === state.configJson) return;
+  const firstLoad = !state.configJson;
   state.configJson = json;
+
+  // Settings were saved (calendars, colors, weather location…): fetch fresh data now
+  // instead of waiting for the next poll. Weather gets a second look a bit later,
+  // because a new location takes the server a few seconds to download.
+  if (!firstLoad) {
+    state.calendarJson = '';
+    loadCalendar();
+    loadWeather();
+    setTimeout(loadWeather, 10 * 1000);
+  }
 
   document.body.className = cfg.display.theme === 'light' ? 'theme-light' : 'theme-dark';
   document.documentElement.style.setProperty('--s', String(cfg.display.fontScale || 1));
