@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Family Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body class="theme-dark">
+  <main class="dashboard">
+
+    <!-- 1. Header: clock + date (left), current weather (right) -->
+    <header class="header">
+      <div class="clock-block">
+        <div class="clock"><span id="clock-time">--:--</span><span id="clock-ampm" class="ampm"></span></div>
+        <div id="clock-date" class="date"></div>
+      </div>
+      <div id="current-weather" class="current-weather placeholder">
+        <!-- Phase 2: current temp, feels-like, icon, high/low, precip -->
+        Weather
+      </div>
+    </header>
+
+    <!-- 2. Weather alert banner (Phase 2; hidden unless an alert is active) -->
+    <div id="alert-banner" class="alert-banner" hidden></div>
+
+    <!-- 3. Today -->
+    <section class="panel today">
+      <h2 class="section-title">Today</h2>
+      <ul id="today-events" class="events events-today"></ul>
+    </section>
+
+    <!-- 4. Upcoming: next N days, grouped by day -->
+    <section class="panel upcoming">
+      <h2 class="section-title">Upcoming</h2>
+      <div id="upcoming-days" class="upcoming-days"></div>
+      <div id="calendar-stale" class="stale" hidden></div>
+    </section>
+
+    <!-- 5. Forecast strip (Phase 2) -->
+    <section id="forecast" class="panel forecast placeholder">5-day forecast</section>
+
+    <!-- 6. To-do list (Phase 3) -->
+    <section id="todos" class="panel todos">
+      <h2 class="section-title">To-Do</h2>
+      <div class="placeholder">Shared to-do list</div>
+    </section>
+
+  </main>
+  <script src="dashboard.js"></script>
+</body>
+</html>

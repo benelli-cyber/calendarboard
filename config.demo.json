@@ -1,0 +1,13 @@
+{
+  "port": 8080,
+  "timezone": "America/New_York",
+  "calendars": [
+    { "name": "Family", "url": "file:test/fixtures/recurring.ics", "color": "#4FC3F7", "enabled": true },
+    { "name": "Kids", "url": "file:test/fixtures/allday-multiday.ics", "color": "#FFB74D", "enabled": true },
+    { "name": "Mom", "url": "file:test/fixtures/cancelled.ics", "color": "#81C784", "enabled": true },
+    { "name": "Dad", "url": "file:test/fixtures/timezones.ics", "color": "#F06292", "enabled": true },
+    { "name": "Broken", "url": "https://calendar.invalid/private-SECRETXYZ/basic.ics", "color": "#BA68C8", "enabled": true }
+  ],
+  "calendarDaysAhead": 7,
+  "display": { "theme": "dark", "fontScale": 1.0 }
+}

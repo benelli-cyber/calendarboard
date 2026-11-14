@@ -1,0 +1,238 @@
+/*
+ * Family Dashboard – portrait 1080×1920, read from across a room.
+ *
+ * Pi 3B rules: no transitions, animations, shadows, blur, or web fonts.
+ * All sizes are multiplied by --s (config display.fontScale).
+ */
+
+:root {
+  --s: 1; /* font scale, set from config by dashboard.js */
+}
+
+.theme-dark {
+  --bg: #000000;
+  --panel: #111418;
+  --text: #ffffff;
+  --muted: #9aa4ae;
+  --faint: #2a3038;
+  --accent: #4fc3f7;
+}
+
+.theme-light {
+  --bg: #f4f4f1;
+  --panel: #ffffff;
+  --text: #111111;
+  --muted: #555c63;
+  --faint: #d9dcdf;
+  --accent: #0277bd;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden; /* kiosk: never scroll */
+  background: var(--bg);
+  color: var(--text);
+  /* System fonts only (Raspberry Pi OS ships DejaVu / Liberation). */
+  font-family: "DejaVu Sans", "Liberation Sans", system-ui, sans-serif;
+  cursor: none;
+}
+
+.dashboard {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: calc(28px * var(--s));
+  padding: calc(48px * var(--s)) calc(56px * var(--s));
+}
+
+.panel {
+  background: var(--panel);
+  border-radius: 20px;
+  padding: calc(28px * var(--s)) calc(36px * var(--s));
+}
+
+.section-title {
+  margin: 0 0 calc(16px * var(--s));
+  font-size: calc(30px * var(--s));
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.placeholder {
+  color: var(--muted);
+  font-size: calc(30px * var(--s));
+}
+
+/* ---------- 1. Header ---------- */
+
+.header {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.clock {
+  font-size: calc(170px * var(--s));
+  font-weight: bold;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ampm {
+  font-size: 0.32em;
+  font-weight: normal;
+  margin-left: 0.2em;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+.date {
+  margin-top: calc(14px * var(--s));
+  font-size: calc(56px * var(--s));
+  color: var(--text);
+}
+
+.current-weather {
+  text-align: right;
+  padding-top: calc(20px * var(--s));
+}
+
+/* ---------- 2. Alert banner (Phase 2) ---------- */
+
+.alert-banner {
+  flex: 0 0 auto;
+  background: #c62828;
+  color: #ffffff;
+  border-radius: 20px;
+  padding: calc(20px * var(--s)) calc(36px * var(--s));
+  font-size: calc(36px * var(--s));
+  font-weight: bold;
+}
+
+/* ---------- Event lists (shared) ---------- */
+
+.events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.event {
+  display: flex;
+  align-items: baseline;
+  gap: calc(22px * var(--s));
+  padding: calc(8px * var(--s)) 0;
+}
+
+/* Colored bar identifying the calendar */
+.event-bar {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: calc(10px * var(--s));
+  border-radius: 5px;
+}
+
+.event-time {
+  white-space: nowrap;
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.event-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.event-note {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.more, .empty {
+  color: var(--muted);
+}
+
+/* ---------- 3. Today (largest event text) ---------- */
+
+.today {
+  flex: 0 1 auto;
+  max-height: 34%;
+  min-height: calc(190px * var(--s));
+  overflow: hidden;
+}
+
+.events-today .event { font-size: calc(42px * var(--s)); }
+.events-today .event-time { min-width: calc(300px * var(--s)); }
+.today .more, .today .empty { font-size: calc(36px * var(--s)); }
+
+/* ---------- 4. Upcoming ---------- */
+
+.upcoming {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.upcoming-days {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.day + .day { margin-top: calc(14px * var(--s)); }
+
+.day-heading {
+  margin: 0;
+  padding-bottom: calc(4px * var(--s));
+  border-bottom: 2px solid var(--faint);
+  font-size: calc(32px * var(--s));
+  font-weight: bold;
+}
+
+.day-heading .day-date {
+  font-weight: normal;
+  color: var(--muted);
+  margin-left: 0.4em;
+}
+
+.upcoming .event { font-size: calc(34px * var(--s)); padding: calc(5px * var(--s)) 0; }
+.upcoming .event-time { min-width: calc(250px * var(--s)); }
+.upcoming .more, .upcoming .empty { font-size: calc(30px * var(--s)); margin-top: calc(8px * var(--s)); }
+
+/* Subtle "last updated" hint when calendar data is old */
+.stale {
+  flex: 0 0 auto;
+  margin-top: calc(8px * var(--s));
+  font-size: calc(22px * var(--s));
+  color: var(--muted);
+  text-align: right;
+}
+
+/* ---------- 5 & 6. Forecast and to-dos (Phases 2–3) ---------- */
+
+.forecast {
+  flex: 0 0 auto;
+  height: calc(210px * var(--s));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.todos {
+  flex: 0 0 auto;
+  height: calc(330px * var(--s));
+  overflow: hidden;
+}
