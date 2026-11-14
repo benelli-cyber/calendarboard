@@ -23,6 +23,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const ical = require('node-ical');
+const { startOfDay, dayKey, daysBetween } = require('./dates');
 
 const FETCH_TIMEOUT_MS = 20_000;
 const STALE_AFTER_MS = 30 * 60 * 1000; // show "last updated" hint after 30 min
@@ -33,25 +34,9 @@ const VIEWS = ['month', 'week'];
 // Small date helpers (all in process-local time = config timezone)
 // ---------------------------------------------------------------------------
 
-/** Local midnight of the given date, plus `days` days. DST-safe (uses calendar math). */
-function startOfDay(date, days = 0) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
-}
-
 /** Local midnight of the first day of the week containing `date`. */
 function startOfWeek(date) {
   return startOfDay(date, -((date.getDay() - WEEK_STARTS_ON + 7) % 7));
-}
-
-/** "2026-11-14" in local time. */
-function dayKey(date) {
-  const p = (n) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}`;
-}
-
-/** Whole calendar days between two local midnights (DST-safe via rounding). */
-function daysBetween(a, b) {
-  return Math.round((startOfDay(b) - startOfDay(a)) / 86_400_000);
 }
 
 const NARROW_NBSP = new RegExp(String.fromCharCode(0x202f), 'g');
