@@ -87,15 +87,14 @@ Family phones ──> http://<lxc-ip>:<port>/todo  (LAN now, Tailscale later)
 
 ## Portrait Layout (1080×1920)
 Top to bottom:
-1. **Header:** clock + date (left), current weather (right)
+1. **Header:** compact clock (~120px) + date (left), current weather (right)
 2. **Weather alert banner** (only when an alert is active)
-3. **Calendar:** month grid or Sun–Sat week view (fills the remaining space)
-4. **5-day forecast strip**
-5. **To-Do list** (bottom section)
+3. **Calendar:** month grid or Sun–Sat week view. **Gets priority for space** (fills everything not used by the other sections)
+4. **Bottom row (~250px), side by side:** 5-day forecast (left, ~55%) | To-Do list (right, ~45%, sized for 2–4 items)
 - Small **Month | Week** toggle button in the bottom-right corner (inside the page margin)
 
 - Default **dark theme** (better on a 24/7 display); optional light theme
-- Base font size large (e.g., clock ~160px; month cells ~20px, week columns ~25px event titles); scale via config
+- Base font size large (e.g., clock ~120px; month cells ~22px with titles wrapping to 2 lines, week columns ~25px); scale via config
 - Optional: dim mode on a schedule (e.g., 11 PM–6 AM) to reduce glare/burn-in
 
 ## Configuration (`config.json`, never committed)

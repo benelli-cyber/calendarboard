@@ -167,7 +167,8 @@ function eventItem(ev) {
   } else if (state.view === 'month') {
     const dot = el('span', 'cev-dot');
     dot.style.background = ev.color;
-    li.append(dot, el('span', 'cev-time', ev.shortTime), el('span', 'cev-title', ev.title));
+    // The ' ' text node lets the line wrap between the time and the title.
+    li.append(dot, el('span', 'cev-time', ev.shortTime), ' ', el('span', 'cev-title', ev.title));
   } else {
     li.append(el('span', 'cev-time', ev.time), el('span', 'cev-title', ev.title));
   }

@@ -48,19 +48,19 @@ html, body {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: calc(28px * var(--s));
-  padding: calc(48px * var(--s)) calc(56px * var(--s));
+  gap: calc(20px * var(--s));
+  padding: calc(32px * var(--s)) calc(36px * var(--s));
 }
 
 .panel {
   background: var(--panel);
   border-radius: 20px;
-  padding: calc(28px * var(--s)) calc(36px * var(--s));
+  padding: calc(20px * var(--s)) calc(28px * var(--s));
 }
 
 .section-title {
-  margin: 0 0 calc(16px * var(--s));
-  font-size: calc(30px * var(--s));
+  margin: 0 0 calc(10px * var(--s));
+  font-size: calc(26px * var(--s));
   font-weight: bold;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -82,7 +82,7 @@ html, body {
 }
 
 .clock {
-  font-size: calc(170px * var(--s));
+  font-size: calc(120px * var(--s));
   font-weight: bold;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -98,13 +98,13 @@ html, body {
 }
 
 .date {
-  margin-top: calc(14px * var(--s));
-  font-size: calc(56px * var(--s));
+  margin-top: calc(6px * var(--s));
+  font-size: calc(44px * var(--s));
 }
 
 .current-weather {
   text-align: right;
-  padding-top: calc(20px * var(--s));
+  padding-top: calc(10px * var(--s));
 }
 
 /* ---------- 2. Alert banner (Phase 2) ---------- */
@@ -126,7 +126,7 @@ html, body {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: calc(22px * var(--s)) calc(22px * var(--s));
+  padding: calc(18px * var(--s)) calc(14px * var(--s)) calc(14px * var(--s));
 }
 
 .cal-header {
@@ -264,10 +264,25 @@ html, body {
   white-space: nowrap;
 }
 
-/* Month view: small cells, single-line events */
-.view-month .cell-date { font-size: calc(24px * var(--s)); }
+/* Month view: every event wraps to at most 2 lines. Timed events are one
+   inline run ("● 9a Soccer practice"); all-day events are colored bars. */
+.view-month .cell-date { font-size: calc(28px * var(--s)); }
 .view-month .cev,
-.view-month .more { font-size: calc(20px * var(--s)); }
+.view-month .more { font-size: calc(22px * var(--s)); }
+.view-month .cev { margin-bottom: calc(6px * var(--s)); }
+.view-month .cev {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: break-word;
+}
+.view-month .cev > span { display: inline; white-space: normal; }
+.view-month .cev:not(.all-day) .cev-dot {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 0.2em;
+}
 
 /* Week view: tall columns, bigger text, titles may wrap to 3 lines */
 .view-week .cell { padding: calc(10px * var(--s)) calc(8px * var(--s)) 0; }
@@ -288,19 +303,27 @@ html, body {
 .view-week .cev.all-day .cev-title { font-size: calc(22px * var(--s)); }
 .view-week .more { font-size: calc(22px * var(--s)); }
 
-/* ---------- 4 & 5. Forecast and to-dos (Phases 2–3) ---------- */
+/* ---------- 4 & 5. Bottom row: forecast + to-dos side by side (Phases 2–3) ---------- */
+
+.bottom-row {
+  flex: 0 0 auto;
+  height: calc(250px * var(--s));
+  display: flex;
+  gap: calc(20px * var(--s));
+}
 
 .forecast {
-  flex: 0 0 auto;
-  height: calc(210px * var(--s));
+  flex: 1.2 1 0;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* About 4 items at ~30px fit in this height */
 .todos {
-  flex: 0 0 auto;
-  height: calc(330px * var(--s));
+  flex: 1 1 0;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -308,8 +331,8 @@ html, body {
 
 .view-toggle {
   position: fixed;
-  right: calc(56px * var(--s));
-  bottom: calc(8px * var(--s));
+  right: calc(36px * var(--s));
+  bottom: 3px;
   display: flex;
   border: 1px solid var(--faint);
   border-radius: 8px;
@@ -318,8 +341,8 @@ html, body {
 
 .view-toggle button {
   font: inherit;
-  font-size: 18px;
-  padding: 4px 14px;
+  font-size: 16px;
+  padding: 2px 12px;
   border: 0;
   background: transparent;
   color: var(--muted);
