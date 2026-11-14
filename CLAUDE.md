@@ -67,7 +67,7 @@ Family phones ──> http://<lxc-ip>:<port>/todo  (LAN now, Tailscale later)
   - **Active alerts** for the location (`/alerts/active?point=lat,lon`). Display prominently in a colored banner when present.
   - Must send a descriptive `User-Agent` header (from config)
 - **Fallback:** Open-Meteo (no key) if NWS fails or times out
-- Refresh every **15 minutes**; cache last good result
+- Refresh every **15 minutes**; cache last good result (memory + `data/weather.json`). Alerts are checked every **5 minutes**
 - Display: current temp, feels-like, conditions icon, today's high/low, precip chance, and a compact 5-day forecast
 - Icons: local SVGs (no external icon CDN)
 - **Optional dev tool:** a script that logs NWS vs Open-Meteo current temps hourly to a CSV for comparison

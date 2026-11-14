@@ -37,5 +37,11 @@
     "theme": "dark",
     "fontScale": 1,
     "calendarView": "month"
+  },
+  "weather": {
+    "lat": 38.8894,
+    "lon": -77.0352,
+    "userAgent": "family-dashboard-demo",
+    "units": "imperial"
   }
 }

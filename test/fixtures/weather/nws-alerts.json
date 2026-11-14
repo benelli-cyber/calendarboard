@@ -1,0 +1,60 @@
+{
+ "features": [
+  {
+   "properties": {
+    "id": "a1",
+    "status": "Actual",
+    "messageType": "Alert",
+    "event": "Winter Weather Advisory",
+    "severity": "Moderate",
+    "headline": "Winter Weather Advisory issued November 14 at 3:00PM EST until November 15 at 10:00AM EST by NWS Sterling VA",
+    "description": "Mixed precipitation expected. Total snow accumulations of up to one inch.",
+    "onset": "2026-11-14T18:00:00-05:00",
+    "ends": "2026-11-15T10:00:00-05:00",
+    "expires": "2026-11-15T04:00:00-05:00"
+   }
+  },
+  {
+   "properties": {
+    "id": "a2",
+    "status": "Actual",
+    "messageType": "Alert",
+    "event": "Wind Advisory",
+    "severity": "Severe",
+    "headline": "Wind Advisory until 7:00PM EST",
+    "description": "West winds 25 to 35 mph with gusts up to 50 mph.",
+    "onset": "2026-11-14T12:00:00-05:00",
+    "ends": "2026-11-14T19:00:00-05:00",
+    "expires": "2026-11-14T19:00:00-05:00"
+   }
+  },
+  {
+   "properties": {
+    "id": "a3",
+    "status": "Actual",
+    "messageType": "Alert",
+    "event": "Frost Advisory",
+    "severity": "Minor",
+    "headline": "Frost Advisory (already ended)",
+    "description": "Old alert.",
+    "onset": "2026-11-13T01:00:00-05:00",
+    "ends": "2026-11-13T09:00:00-05:00",
+    "expires": "2026-11-13T09:00:00-05:00"
+   }
+  },
+  {
+   "properties": {
+    "id": "a4",
+    "status": "Test",
+    "messageType": "Alert",
+    "event": "Test Message",
+    "severity": "Unknown",
+    "headline": "This is a test",
+    "description": "Test.",
+    "onset": null,
+    "ends": null,
+    "expires": "2026-11-15T23:00:00-05:00"
+   }
+  }
+ ]
+}

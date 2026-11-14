@@ -6,6 +6,7 @@
  *   GET /api/config     display settings (no secrets)
  *   GET /api/calendar   calendar days; ?view=month|week (default: config setting)
  *   POST /api/display   { calendarView: "month"|"week" } – the on-screen toggle button
+ *   GET /api/weather    current conditions, today, 5-day forecast, active alerts
  *   GET /api/health     simple status check
  */
 const path = require('path');
@@ -18,11 +19,17 @@ let config = loadConfig();
 process.env.TZ = config.timezone;
 
 const { CalendarService } = require('./calendar');
+const { WeatherService } = require('./weather');
 
 const calendar = new CalendarService({
   getConfig: () => config,
   cacheDir: path.join(ROOT, 'data', 'calendar-cache'),
   rootDir: ROOT,
+});
+
+const weather = new WeatherService({
+  getConfig: () => config,
+  cacheDir: path.join(ROOT, 'data'),
 });
 
 const app = express();
@@ -58,6 +65,7 @@ app.post('/api/display', express.json({ limit: '1kb' }), (req, res) => {
     res.status(500).json({ error: 'Could not save setting' });
   }
 });
+app.get('/api/weather', (req, res) => res.json(weather.getPayload()));
 app.get('/api/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
 // No long-lived caching: ETags make reloads cheap, and updates show up immediately.
@@ -67,4 +75,9 @@ app.listen(config.port, config.host, () => {
   console.log(`[server] Family dashboard on http://${config.host}:${config.port}/ (TZ ${config.timezone})`);
   console.log(`[server] ${config.calendars.filter((c) => c.enabled).length} calendar(s) enabled`);
   calendar.start();
+  if (weather.locationKey()) {
+    weather.start();
+  } else {
+    console.log('[server] Weather disabled: set weather.lat / weather.lon in config.json');
+  }
 });

@@ -15,13 +15,22 @@
         <div class="clock"><span id="clock-time">--:--</span><span id="clock-ampm" class="ampm"></span></div>
         <div id="clock-date" class="date"></div>
       </div>
-      <div id="current-weather" class="current-weather placeholder">
-        <!-- Phase 2: current temp, feels-like, icon, high/low, precip -->
-        Weather
+      <!-- Current weather: icon + temp, then feels-like/high/low, then conditions/precip -->
+      <div id="current-weather" class="current-weather" hidden>
+        <div class="cw-top">
+          <img id="cw-icon" class="cw-icon" alt="">
+          <span id="cw-temp" class="cw-temp"></span>
+        </div>
+        <div id="cw-line1" class="cw-line"></div>
+        <div class="cw-line">
+          <span id="cw-condition" class="cw-condition"></span>
+          <span id="cw-precip" class="cw-precip" hidden><img src="icons/drop.svg" alt=""><span></span></span>
+        </div>
       </div>
+      <div id="weather-message" class="weather-message" hidden></div>
     </header>
 
-    <!-- 2. Weather alert banner (Phase 2; hidden unless an alert is active) -->
+    <!-- 2. Weather alert banner (hidden unless an NWS alert is active) -->
     <div id="alert-banner" class="alert-banner" hidden></div>
 
     <!-- 3. Calendar: month grid or Sun–Sat week (display.calendarView) -->
@@ -36,8 +45,11 @@
 
     <!-- 4 + 5. Bottom row: forecast (left) and to-do list (right), side by side -->
     <div class="bottom-row">
-      <!-- Forecast strip (Phase 2) -->
-      <section id="forecast" class="panel forecast placeholder">5-day forecast</section>
+      <!-- 5-day forecast strip -->
+      <section class="panel forecast">
+        <div id="forecast-days" class="forecast-days"></div>
+        <div id="weather-stale" class="weather-stale" hidden></div>
+      </section>
 
       <!-- To-do list (Phase 3): sized for about 4 items -->
       <section id="todos" class="panel todos">

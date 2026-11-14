@@ -1,0 +1,22 @@
+{
+ "features": [
+  {
+   "properties": {
+    "stationIdentifier": "KDCA",
+    "name": "Washington/Reagan National Airport, DC"
+   }
+  },
+  {
+   "properties": {
+    "stationIdentifier": "KCGS",
+    "name": "College Park Airport"
+   }
+  },
+  {
+   "properties": {
+    "stationIdentifier": "KADW",
+    "name": "Camp Springs / Andrews Air Force Base"
+   }
+  }
+ ]
+}

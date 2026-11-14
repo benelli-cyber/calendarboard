@@ -102,22 +102,80 @@ html, body {
   font-size: calc(44px * var(--s));
 }
 
+/* Current weather (top right). Sized to match the clock + date block. */
 .current-weather {
   text-align: right;
-  padding-top: calc(10px * var(--s));
+  max-width: 46%;
+  min-width: 0;
+}
+
+.cw-top {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: calc(10px * var(--s));
+}
+
+.cw-icon {
+  width: calc(96px * var(--s));
+  height: calc(96px * var(--s));
+}
+
+.cw-temp {
+  font-size: calc(100px * var(--s));
+  font-weight: bold;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cw-line {
+  margin-top: calc(4px * var(--s));
+  font-size: calc(30px * var(--s));
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cw-line strong { color: var(--text); font-weight: bold; }
+
+.cw-condition { color: var(--text); }
+
+.cw-precip { margin-left: 0.5em; white-space: nowrap; }
+.cw-precip img { width: 0.8em; height: 0.8em; vertical-align: -0.05em; margin-right: 0.15em; }
+
+.weather-message {
+  color: var(--muted);
+  font-size: calc(26px * var(--s));
+  text-align: right;
+  max-width: 40%;
 }
 
 /* ---------- 2. Alert banner (Phase 2) ---------- */
 
 .alert-banner {
   flex: 0 0 auto;
-  background: #c62828;
-  color: #ffffff;
-  border-radius: 20px;
-  padding: calc(20px * var(--s)) calc(36px * var(--s));
-  font-size: calc(36px * var(--s));
-  font-weight: bold;
+  border-radius: 16px;
+  padding: calc(14px * var(--s)) calc(28px * var(--s));
+  font-size: calc(32px * var(--s));
+  line-height: 1.3;
 }
+
+/* Color by the most severe active alert */
+.alert-banner.sev-extreme,
+.alert-banner.sev-severe   { background: #c62828; color: #ffffff; }
+.alert-banner.sev-moderate { background: #ef6c00; color: #ffffff; }
+.alert-banner.sev-minor,
+.alert-banner.sev-unknown  { background: #fbc02d; color: #000000; }
+
+.alert-line {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.alert-event { font-weight: bold; }
 
 /* ---------- 3. Calendar (month grid / week columns) ---------- */
 
@@ -316,8 +374,53 @@ html, body {
   flex: 1.2 1 0;
   min-width: 0;
   display: flex;
+  flex-direction: column;
+  padding: calc(16px * var(--s)) calc(12px * var(--s)) calc(10px * var(--s));
+}
+
+.forecast-days {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: center;
-  justify-content: center;
+  text-align: center;
+}
+
+.fc-day {
+  font-size: calc(26px * var(--s));
+  font-weight: bold;
+}
+
+.fc-icon {
+  width: calc(64px * var(--s));
+  height: calc(64px * var(--s));
+  margin: calc(4px * var(--s)) auto;
+  display: block;
+}
+
+/* High above low: the columns are too narrow for "54° 36°" on one line */
+.fc-temps {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  line-height: 1.15;
+}
+
+.fc-high { display: block; font-size: calc(32px * var(--s)); font-weight: bold; }
+.fc-low { display: block; font-size: calc(26px * var(--s)); color: var(--muted); }
+
+.fc-precip {
+  font-size: calc(22px * var(--s));
+  color: var(--muted);
+  min-height: 1.3em; /* keep rows aligned when a day has no precip */
+}
+.fc-precip img { width: 0.8em; height: 0.8em; vertical-align: -0.05em; margin-right: 0.1em; }
+
+/* Small note when weather is old or comes from the fallback service */
+.weather-stale {
+  flex: 0 0 auto;
+  font-size: calc(18px * var(--s));
+  color: var(--muted);
+  text-align: right;
 }
 
 /* About 4 items at ~30px fit in this height */

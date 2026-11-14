@@ -1,0 +1,11 @@
+{
+ "properties": {
+  "gridId": "LWX",
+  "gridX": 97,
+  "gridY": 71,
+  "forecast": "https://api.weather.gov/gridpoints/LWX/97,71/forecast",
+  "forecastHourly": "https://api.weather.gov/gridpoints/LWX/97,71/forecast/hourly",
+  "observationStations": "https://api.weather.gov/gridpoints/LWX/97,71/stations",
+  "timeZone": "America/New_York"
+ }
+}

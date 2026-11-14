@@ -11,6 +11,7 @@
 
 const CONFIG_POLL_MS = 15 * 1000;   // also how fast the Pi follows the Month/Week button
 const CALENDAR_POLL_MS = 60 * 1000; // server refreshes from Google every 5 min
+const WEATHER_POLL_MS = 2 * 60 * 1000; // server refreshes weather every 15 min, alerts every 5
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const $ = (id) => document.getElementById(id);
@@ -22,6 +23,7 @@ const state = {
   configView: null,       // calendarView in the last config we applied
   viewClickedAt: 0,       // ignore stale config polls right after a button click
   calendarJson: '',
+  weatherJson: '',
 };
 
 // ---------------------------------------------------------------------------
@@ -268,6 +270,127 @@ async function loadCalendar() {
 }
 
 // ---------------------------------------------------------------------------
+// Weather
+// ---------------------------------------------------------------------------
+
+/** Icon names come from the server (e.g. "rain"); only allow simple names. */
+function iconSrc(name) {
+  return `icons/${/^[a-z-]+$/.test(name || '') ? name : 'cloudy'}.svg`;
+}
+
+/** Set an <img> src only when it changes (avoids re-decoding the SVG). */
+function setIcon(img, name) {
+  const src = iconSrc(name);
+  if (img.getAttribute('src') !== src) img.setAttribute('src', src);
+}
+
+const deg = (v) => (v == null ? '--' : `${v}°`);
+
+/** "until 7:00 PM" today, or "until Sun 10:00 AM" on another day. */
+function untilText(iso) {
+  if (!iso) return '';
+  const end = new Date(iso);
+  const day = (d) => new Intl.DateTimeFormat('en-US', { timeZone: state.timezone, dateStyle: 'short' }).format(d);
+  const sameDay = day(end) === day(new Date());
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: state.timezone, hour: 'numeric', minute: '2-digit', ...(sameDay ? {} : { weekday: 'short' }),
+  });
+  return `until ${fmt.format(end)}`;
+}
+
+function renderCurrentWeather(w) {
+  const box = $('current-weather');
+  const msg = $('weather-message');
+  if (!w.configured || !w.current) {
+    box.hidden = true;
+    msg.hidden = false;
+    setText(msg, w.configured ? 'Weather unavailable' : 'Set weather.lat / weather.lon in config.json');
+    return;
+  }
+  msg.hidden = true;
+  box.hidden = false;
+  const { current, today } = w;
+  setIcon($('cw-icon'), current.icon);
+  setText($('cw-temp'), deg(current.temp));
+  setText($('cw-line1'), `Feels ${deg(current.feelsLike)}  ·  H ${deg(today?.high)}  L ${deg(today?.low)}`);
+  setText($('cw-condition'), current.condition);
+  const precip = $('cw-precip');
+  const chance = today?.precipChance;
+  precip.hidden = !(chance >= 10);
+  if (!precip.hidden) setText(precip.lastElementChild, `${chance}%`);
+}
+
+/** Banner under the header, colored by the most severe alert. Returns true if its visibility changed. */
+function renderAlerts(alerts) {
+  const banner = $('alert-banner');
+  const wasHidden = banner.hidden;
+  if (!alerts.length) {
+    banner.hidden = true;
+    return !wasHidden;
+  }
+  banner.className = `alert-banner sev-${(alerts[0].severity || 'unknown').toLowerCase()}`;
+  const lines = alerts.slice(0, 2).map((a) => {
+    const line = el('div', 'alert-line');
+    line.append(el('span', 'alert-event', a.event), ` ${untilText(a.ends)}`);
+    return line;
+  });
+  if (alerts.length > 2) lines.push(el('div', 'alert-line', `+${alerts.length - 2} more alert(s)`));
+  banner.replaceChildren(...lines);
+  banner.hidden = false;
+  return wasHidden;
+}
+
+function renderForecast(w) {
+  const wrap = $('forecast-days');
+  const cells = (w.daily || []).slice(0, 5).map((d) => {
+    const cell = el('div', 'fc');
+    const icon = el('img', 'fc-icon');
+    icon.src = iconSrc(d.icon);
+    icon.alt = d.condition || '';
+    const temps = el('div', 'fc-temps');
+    temps.append(el('span', 'fc-high', deg(d.high)), el('span', 'fc-low', deg(d.low)));
+    const precip = el('div', 'fc-precip');
+    if (d.precipChance >= 10) {
+      const drop = el('img');
+      drop.src = 'icons/drop.svg';
+      drop.alt = '';
+      precip.append(drop, `${d.precipChance}%`);
+    }
+    cell.append(el('div', 'fc-day', d.weekday), icon, temps, precip);
+    return cell;
+  });
+  if (!cells.length) cells.push(el('div', 'placeholder', w.configured ? 'Forecast unavailable' : ''));
+  wrap.replaceChildren(...cells);
+
+  // Small note when the data is old, or when the fallback service is in use.
+  const note = $('weather-stale');
+  let text = '';
+  if (w.configured && w.stale && w.updatedAt) {
+    const t = new Intl.DateTimeFormat('en-US', { timeZone: state.timezone, weekday: 'short', hour: 'numeric', minute: '2-digit' });
+    text = `Weather updated ${t.format(new Date(w.updatedAt))}`;
+  } else if (w.source === 'open-meteo') {
+    text = 'via Open-Meteo';
+  }
+  note.hidden = !text;
+  setText(note, text);
+}
+
+async function loadWeather() {
+  try {
+    const w = await getJson('/api/weather');
+    const json = JSON.stringify(w);
+    if (json === state.weatherJson) return; // nothing changed → no DOM work
+    state.weatherJson = json;
+    renderCurrentWeather(w);
+    renderForecast(w);
+    // The banner changes the calendar's height, so re-fit the calendar cells.
+    if (renderAlerts(w.alerts || []) && state.calendarJson) renderCalendar(JSON.parse(state.calendarJson));
+  } catch (err) {
+    console.warn('weather:', err.message); // keep showing the last weather we had
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Start
 // ---------------------------------------------------------------------------
 
@@ -280,3 +403,6 @@ setInterval(tickClock, 1000);
 loadConfig().then(() => setView(state.view));
 setInterval(loadConfig, CONFIG_POLL_MS);
 setInterval(loadCalendar, CALENDAR_POLL_MS);
+
+loadWeather();
+setInterval(loadWeather, WEATHER_POLL_MS);
