@@ -461,6 +461,22 @@ class WeatherService {
 
   stop() {
     this.timers.forEach(clearInterval);
+    this.timers = [];
+  }
+
+  /**
+   * Called after settings are saved. Starts weather if it was off (no location
+   * at startup), or fetches right away if the location changed.
+   */
+  onConfigChange() {
+    const key = this.locationKey();
+    if (!key) return; // location cleared → getPayload() reports configured:false
+    if (!this.timers.length) {
+      this.start();
+    } else if (this.weather?.locationKey !== key || this.alerts?.locationKey !== key) {
+      this.refreshWeather();
+      this.refreshAlerts();
+    }
   }
 
   /** JSON for GET /api/weather. */

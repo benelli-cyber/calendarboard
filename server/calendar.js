@@ -365,7 +365,8 @@ class CalendarService {
     const cfg = this.getConfig();
     const cals = this.enabledCalendars();
     // Recompute only when data, config, view, or the day changes.
-    const memoKey = `${this.version}|${dayKey(now)}|` + cals.map((c) => `${c.name}${c.color}`).join(',');
+    const memoKey = `${this.version}|${dayKey(now)}|` +
+      cals.map((c) => `${calendarId(c.url)}${c.name}${c.color}`).join(',');
     const cached = this.memo.get(view);
     if (cached?.key === memoKey) return cached.value;
 

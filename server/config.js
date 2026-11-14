@@ -8,6 +8,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const ROOT = path.join(__dirname, '..');
 const CONFIG_PATH = process.env.CONFIG_PATH || path.join(ROOT, 'config.json');
@@ -102,6 +103,9 @@ function updateConfig(mutate) {
  */
 function publicConfig(cfg) {
   return {
+    // Changes whenever anything in config.json changes (one-way hash, reveals nothing),
+    // so the dashboard knows to reload calendar + weather after a settings save.
+    revision: crypto.createHash('sha256').update(JSON.stringify(cfg)).digest('hex').slice(0, 12),
     timezone: cfg.timezone,
     display: cfg.display,
     calendars: cfg.calendars.map(({ name, color, enabled }) => ({ name, color, enabled })),
