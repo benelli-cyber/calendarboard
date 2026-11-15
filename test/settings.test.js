@@ -106,6 +106,15 @@ test('display and weather settings', () => {
   assert.equal(raw.weather.lon, -77.0352);
   assert.equal(raw.weather.units, 'imperial');
 
+  applySettings(raw, { display: { dimEnabled: true, dimStart: '22:30', dimEnd: '06:15', dimLevel: 0.75 } });
+  assert.equal(raw.display.dimEnabled, true);
+  assert.equal(raw.display.dimStart, '22:30');
+  assert.equal(raw.display.dimEnd, '06:15');
+  assert.equal(raw.display.dimLevel, 0.75);
+  assert.throws(() => applySettings(baseRaw(), { display: { dimStart: '25:00' } }), { field: 'display.dimStart' });
+  assert.throws(() => applySettings(baseRaw(), { display: { dimLevel: 1 } }), { field: 'display.dimLevel' });
+  assert.throws(() => applySettings(baseRaw(), { display: { dimEnabled: 'yes' } }), { field: 'display.dimEnabled' });
+
   assert.throws(() => applySettings(baseRaw(), { display: { theme: 'neon' } }), { field: 'display.theme' });
   assert.throws(() => applySettings(baseRaw(), { display: { fontScale: 5 } }), { field: 'display.fontScale' });
   assert.throws(() => applySettings(baseRaw(), { weather: { lat: 95 } }), { field: 'weather.lat' });

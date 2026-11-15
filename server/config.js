@@ -19,7 +19,11 @@ const DEFAULTS = {
   timezone: 'America/New_York',
   calendars: [],
   weather: { lat: 0, lon: 0, userAgent: 'family-dashboard', units: 'imperial' },
-  display: { theme: 'dark', fontScale: 1.0, calendarView: 'month', dimStart: '23:00', dimEnd: '06:00' },
+  display: {
+    theme: 'dark', fontScale: 1.0, calendarView: 'month',
+    // Night dimming (off by default): a dark layer over the dashboard between these times.
+    dimEnabled: false, dimStart: '23:00', dimEnd: '06:00', dimLevel: 0.6,
+  },
 };
 
 const CALENDAR_VIEWS = ['month', 'week'];
@@ -49,6 +53,12 @@ function normalize(raw) {
   cfg.display.fontScale = Number.isFinite(scale) ? Math.min(Math.max(scale, 0.5), 2) : 1;
   if (!['dark', 'light'].includes(cfg.display.theme)) cfg.display.theme = 'dark';
   if (!CALENDAR_VIEWS.includes(cfg.display.calendarView)) cfg.display.calendarView = 'month';
+  cfg.display.dimEnabled = cfg.display.dimEnabled === true;
+  const HH_MM = /^([01]\d|2[0-3]):[0-5]\d$/;
+  if (!HH_MM.test(cfg.display.dimStart)) cfg.display.dimStart = DEFAULTS.display.dimStart;
+  if (!HH_MM.test(cfg.display.dimEnd)) cfg.display.dimEnd = DEFAULTS.display.dimEnd;
+  const level = Number(cfg.display.dimLevel);
+  cfg.display.dimLevel = Number.isFinite(level) ? Math.min(Math.max(level, 0.2), 0.9) : DEFAULTS.display.dimLevel;
 
   cfg.calendars = (Array.isArray(cfg.calendars) ? cfg.calendars : [])
     .filter((c) => c && typeof c.url === 'string' && c.url.trim())

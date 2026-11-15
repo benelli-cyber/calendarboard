@@ -50,6 +50,10 @@ function toSettings(cfg) {
       theme: cfg.display.theme,
       fontScale: cfg.display.fontScale,
       calendarView: cfg.display.calendarView,
+      dimEnabled: cfg.display.dimEnabled,
+      dimStart: cfg.display.dimStart,
+      dimEnd: cfg.display.dimEnd,
+      dimLevel: cfg.display.dimLevel,
     },
     weather: {
       lat: cfg.weather.lat,
@@ -131,6 +135,13 @@ function applySettings(raw, input) {
     if (d.calendarView !== undefined) {
       if (!CALENDAR_VIEWS.includes(d.calendarView)) throw new SettingsError('display.calendarView', 'View must be month or week');
       raw.display.calendarView = d.calendarView;
+    }
+    if (d.dimEnabled !== undefined) {
+      if (typeof d.dimEnabled !== 'boolean') throw new SettingsError('display.dimEnabled', 'Night dimming must be on or off');
+      raw.display.dimEnabled = d.dimEnabled;
+    }
+    if (d.dimLevel !== undefined) {
+      raw.display.dimLevel = Math.round(checkNumber(d.dimLevel, 0.2, 0.9, 'display.dimLevel', 'Dimming') * 100) / 100;
     }
     for (const key of ['dimStart', 'dimEnd']) {
       if (d[key] !== undefined) {

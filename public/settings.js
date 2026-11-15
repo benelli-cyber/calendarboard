@@ -133,12 +133,22 @@ function render(s) {
   document.querySelector(`input[name=theme][value=${s.display.theme}]`).checked = true;
   $('fontScale').value = s.display.fontScale;
   showFontScale();
+  $('dimEnabled').checked = s.display.dimEnabled;
+  $('dimStart').value = s.display.dimStart;
+  $('dimEnd').value = s.display.dimEnd;
+  $('dimLevel').value = s.display.dimLevel;
+  showDim();
   $('coords').value = formatCoords(s.weather.lat, s.weather.lon);
   $('userAgent').value = s.weather.userAgent || '';
 }
 
 function showFontScale() {
   $('fontScale-value').textContent = `${Math.round($('fontScale').value * 100)}%`;
+}
+
+function showDim() {
+  $('dim-options').hidden = !$('dimEnabled').checked;
+  $('dimLevel-value').textContent = `${Math.round($('dimLevel').value * 100)}%`;
 }
 
 /** Show what the dashboard's weather looks like right now (confirms the location works). */
@@ -198,6 +208,10 @@ async function save(event) {
       calendarView: document.querySelector('input[name=calendarView]:checked').value,
       theme: document.querySelector('input[name=theme]:checked').value,
       fontScale: Number($('fontScale').value),
+      dimEnabled: $('dimEnabled').checked,
+      dimStart: $('dimStart').value,
+      dimEnd: $('dimEnd').value,
+      dimLevel: Number($('dimLevel').value),
     },
     weather: { ...coords, userAgent: $('userAgent').value },
   };
@@ -244,6 +258,8 @@ $('add-calendar').addEventListener('click', () => {
   card.querySelector('.cal-name').focus();
 });
 $('fontScale').addEventListener('input', showFontScale);
+$('dimEnabled').addEventListener('change', showDim);
+$('dimLevel').addEventListener('input', showDim);
 $('settings-form').addEventListener('submit', save);
 document.addEventListener('input', () => { if ($('message').className === 'ok') setMessage(''); });
 

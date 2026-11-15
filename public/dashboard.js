@@ -27,6 +27,7 @@ const state = {
   weatherJson: '',
   todoJson: '',
   appVersion: null,       // server start id; a change means "reload for new code"
+  display: null,          // latest display settings (theme, dimming…)
 };
 
 // ---------------------------------------------------------------------------
@@ -63,8 +64,9 @@ function textColorFor(hex) {
 // Clock & date (always in the configured timezone, regardless of the Pi's)
 // ---------------------------------------------------------------------------
 
-let timeFmt, dateFmt, hourFmt;
+let timeFmt, dateFmt, hourFmt, hhmmFmt;
 function makeClockFormatters() {
+  hhmmFmt = new Intl.DateTimeFormat('en-US', { timeZone: state.timezone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   hourFmt = new Intl.DateTimeFormat('en-US', { timeZone: state.timezone, hour: 'numeric', hourCycle: 'h23' });
   timeFmt = new Intl.DateTimeFormat('en-US', { timeZone: state.timezone, hour: 'numeric', minute: '2-digit', hour12: true });
   dateFmt = new Intl.DateTimeFormat('en-US', { timeZone: state.timezone, weekday: 'long', month: 'long', day: 'numeric' });
@@ -76,10 +78,31 @@ function tickClock() {
   const hm = parts.filter((p) => p.type === 'hour' || p.type === 'minute' || p.type === 'literal')
     .map((p) => p.value).join('').trim();
   const ampm = (parts.find((p) => p.type === 'dayPeriod') || {}).value || '';
-  if ($('clock-time').textContent !== hm) checkDailyReload(now); // once a minute
+  if ($('clock-time').textContent !== hm) { // once a minute
+    checkDailyReload(now);
+    applyDim(now);
+  }
   setText($('clock-time'), hm);
   setText($('clock-ampm'), ampm);
   setText($('clock-date'), dateFmt.format(now));
+}
+
+// ---------------------------------------------------------------------------
+// Night dimming (display.dimEnabled / dimStart / dimEnd / dimLevel)
+// ---------------------------------------------------------------------------
+
+/** Is "HH:MM" `t` inside [start, end)? Handles windows that cross midnight (23:00–06:00). */
+function inTimeWindow(t, start, end) {
+  if (start === end) return false;
+  return start < end ? t >= start && t < end : t >= start || t < end;
+}
+
+function applyDim(now = new Date()) {
+  const d = state.display;
+  const overlay = $('dim-overlay');
+  const on = Boolean(d && d.dimEnabled && inTimeWindow(hhmmFmt.format(now), d.dimStart, d.dimEnd));
+  if (on) overlay.style.setProperty('--dim', String(d.dimLevel));
+  if (overlay.hidden === on) overlay.hidden = !on; // only touch the DOM when it changes
 }
 
 // ---------------------------------------------------------------------------
@@ -139,6 +162,8 @@ function applyConfig(cfg) {
   }
 
   document.body.className = cfg.display.theme === 'light' ? 'theme-light' : 'theme-dark';
+  state.display = cfg.display;
+  applyDim();
   document.documentElement.style.setProperty('--s', String(cfg.display.fontScale || 1));
   if (cfg.timezone && cfg.timezone !== state.timezone) {
     state.timezone = cfg.timezone;

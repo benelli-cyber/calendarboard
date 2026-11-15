@@ -45,6 +45,13 @@ test('updateConfig keeps the file private (chmod 600 survives a save)', () => {
   assert.equal(fs.statSync(process.env.CONFIG_PATH).mode & 0o777, 0o600);
 });
 
+test('night dimming defaults to off, bad values are fixed', () => {
+  const d = normalize({}).display;
+  assert.deepEqual([d.dimEnabled, d.dimStart, d.dimEnd, d.dimLevel], [false, '23:00', '06:00', 0.6]);
+  const bad = normalize({ display: { dimEnabled: 'yes', dimStart: '7pm', dimLevel: 5 } }).display;
+  assert.deepEqual([bad.dimEnabled, bad.dimStart, bad.dimLevel], [false, '23:00', 0.9]);
+});
+
 test('normalize falls back to month for an unknown view', () => {
   assert.equal(normalize({ display: { calendarView: 'year' } }).display.calendarView, 'month');
   assert.equal(normalize({}).display.calendarView, 'month');

@@ -487,6 +487,19 @@ html, body {
 /* Tighter title in the to-do panel to make room for a 4th item */
 .todos .section-title { margin-bottom: calc(4px * var(--s)); }
 
+/* ---------- Night dimming ----------
+   One black layer with fixed opacity. Much cheaper on the Pi's GPU than a
+   brightness filter, which would repaint the whole page on every change.
+   pointer-events: none keeps the Month/Week button clickable. */
+.dim-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000000;
+  opacity: var(--dim, 0.6);
+  pointer-events: none;
+  z-index: 10;
+}
+
 /* ---------- Month/week toggle (bottom-right, inside the page margin) ---------- */
 
 .view-toggle {

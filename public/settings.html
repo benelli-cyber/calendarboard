@@ -103,6 +103,24 @@
 
     .status { margin-top: 10px; font-size: 15px; color: var(--muted); }
 
+    /* Night dimming */
+    .switch-row { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+    .switch-row input { width: 24px; height: 24px; accent-color: var(--accent); }
+    .dim-options[hidden] { display: none; }
+    .time-row { display: flex; gap: 12px; flex-wrap: wrap; margin: 6px 0; }
+    .time-row label { display: flex; align-items: center; gap: 8px; }
+    input[type=time] {
+      font: inherit;
+      min-height: 48px;
+      color: var(--text);
+      background: var(--bg);
+      border: 2px solid var(--faint);
+      border-radius: 10px;
+      padding: 8px 10px;
+      color-scheme: dark;
+    }
+    .range-label { color: var(--muted); font-size: 15px; }
+
     /* Sticky save bar */
     .save-bar {
       position: fixed;
@@ -168,6 +186,21 @@
         <div class="range-row">
           <input type="range" id="fontScale" min="0.7" max="1.5" step="0.05" data-field="display.fontScale">
           <output id="fontScale-value"></output>
+        </div>
+      </div>
+      <div class="field">
+        <span>Night dimming</span>
+        <label class="switch-row"><input type="checkbox" id="dimEnabled"> Darken the screen at night</label>
+        <div id="dim-options" class="dim-options">
+          <div class="time-row">
+            <label>From <input type="time" id="dimStart" data-field="display.dimStart"></label>
+            <label>to <input type="time" id="dimEnd" data-field="display.dimEnd"></label>
+          </div>
+          <div class="range-row">
+            <span class="range-label">Darkness</span>
+            <input type="range" id="dimLevel" min="0.2" max="0.9" step="0.05" data-field="display.dimLevel">
+            <output id="dimLevel-value"></output>
+          </div>
         </div>
       </div>
     </section>

@@ -19,7 +19,9 @@
     "theme": "dark",
     "fontScale": 1.0,
     "calendarView": "month",
+    "dimEnabled": false,
     "dimStart": "23:00",
-    "dimEnd": "06:00"
+    "dimEnd": "06:00",
+    "dimLevel": 0.6
   }
 }
