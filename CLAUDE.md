@@ -127,7 +127,7 @@ Top to bottom:
 ## Security
 - Secret iCal URLs grant read access to calendars: **never commit, never log, never send to the front end**
 - App is **LAN-only**. Never suggest port forwarding.
-- Remote access (Phase 4) is via **Tailscale** only
+- Remote access (Phase 6, postponed) is via **Tailscale** only, never `tailscale funnel`
 - Sanitize to-do input (escape HTML on render)
 
 ## Project Structure
@@ -166,7 +166,7 @@ family-dashboard/
 3. **To-Do:** SQLite, `/todo` mobile page, dashboard section, PWA manifest
 4. **Settings page** + live config reload
 5. **Deploy:** systemd unit, install instructions for the LXC, Pi kiosk URL change, daily reload
-6. **Remote access:** Tailscale instructions for LXC and family phones
+6. **Remote access:** Tailscale instructions for LXC and family phones. **Postponed by the user**; the process is written up in `deploy/REMOTE-ACCESS.md` (untested notes). Don't start it unless asked.
 7. **Polish:** dim schedule, stale-data indicators, compare-weather script
 
 ## Go-Live Checklist (remind the user before finishing all phases)

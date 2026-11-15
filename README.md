@@ -4,7 +4,7 @@ A self-hosted replacement for DAKboard. The server runs on the Proxmox LXC; the
 Raspberry Pi 3B just shows `http://<lxc-ip>:8080/` in Chromium kiosk mode
 (portrait, 1080×1920). See `CLAUDE.md` for the full spec and build phases.
 
-**Status:** Phase 5 done (all features + deployment files). Next: remote access with Tailscale.
+**Status:** Phase 5 done (all features + deployment files). Remote access (Tailscale) is postponed; notes in [`deploy/REMOTE-ACCESS.md`](deploy/REMOTE-ACCESS.md). Next: polish (dim schedule, compare-weather script).
 
 **Installing on the LXC and Pi:** see [`deploy/INSTALL.md`](deploy/INSTALL.md).
 
