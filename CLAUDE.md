@@ -96,7 +96,8 @@ Top to bottom:
 
 - Default **dark theme** (better on a 24/7 display); optional light theme
 - Base font size large (e.g., clock ~120px; month cells ~22px with titles wrapping to 2 lines, week columns ~25px); scale via config
-- Optional: dim mode on a schedule (e.g., 11 PM–6 AM) to reduce glare/burn-in
+- Night dimming on a schedule (`display.dimEnabled`, `dimStart`, `dimEnd`, `dimLevel`; off by default; may cross midnight): a single black overlay, set on the settings page
+- If the server can't be reached for 5+ minutes, a small amber note in the bottom-left margin says since when
 
 ## Configuration (`config.json`, never committed)
 ```json
@@ -167,12 +168,12 @@ family-dashboard/
 4. **Settings page** + live config reload
 5. **Deploy:** systemd unit, install instructions for the LXC, Pi kiosk URL change, daily reload
 6. **Remote access:** Tailscale instructions for LXC and family phones. **Postponed by the user**; the process is written up in `deploy/REMOTE-ACCESS.md` (untested notes). Don't start it unless asked.
-7. **Polish:** dim schedule, stale-data indicators, compare-weather script
+7. **Polish:** dim schedule, stale-data indicators, compare-weather script (`scripts/compare-weather.js`). **Done.**
 
 ## Go-Live Checklist (remind the user before finishing all phases)
 Open items the user has asked to be reminded about. Raise any unchecked items at the end of each phase, and do not call the project finished until they are done.
 - [ ] **Weather location:** set the real `weather.lat` / `weather.lon` (and `weather.userAgent` with a contact address) in the LXC's `config.json`. Development used a public landmark (National Mall, DC) in `config.demo.json`.
-- [ ] **Open-Meteo fallback:** confirm it works live from the LXC (it was rate-limited from the cloud dev sandbox, so it was only tested against a sample response).
+- [x] **Open-Meteo fallback:** verified live (real API response parsed correctly via `scripts/compare-weather.js`, Nov 14 2026). Nothing left to do.
 
 ## Testing & Verification
 - After each phase, give the exact command to run locally and the URL to open

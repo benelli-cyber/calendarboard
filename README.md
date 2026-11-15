@@ -4,7 +4,7 @@ A self-hosted replacement for DAKboard. The server runs on the Proxmox LXC; the
 Raspberry Pi 3B just shows `http://<lxc-ip>:8080/` in Chromium kiosk mode
 (portrait, 1080×1920). See `CLAUDE.md` for the full spec and build phases.
 
-**Status:** Phase 5 done (all features + deployment files). Remote access (Tailscale) is postponed; notes in [`deploy/REMOTE-ACCESS.md`](deploy/REMOTE-ACCESS.md). Next: polish (dim schedule, compare-weather script).
+**Status:** All phases done except remote access (Tailscale), which is postponed; notes in [`deploy/REMOTE-ACCESS.md`](deploy/REMOTE-ACCESS.md).
 
 **Installing on the LXC and Pi:** see [`deploy/INSTALL.md`](deploy/INSTALL.md).
 
@@ -45,6 +45,42 @@ see the "Last updated" hint for a calendar that keeps failing.
 
 `config.json` holds the secret URLs. It is git-ignored, is never sent to the
 browser, and the URLs are never written to logs.
+
+## Night dimming
+Turn it on in **Settings → Display → Night dimming**: pick the hours (they can
+cross midnight, e.g. 11 PM to 6 AM) and how dark. A black layer covers the
+dashboard during those hours, so it's less bright in a dark room. It's off by
+default. The Pi's screen itself stays on; this only darkens the picture.
+
+## "Can't reach the server" note
+If the dashboard can't reach the server for 5 minutes (LXC down, network
+problem), a small amber note appears in the bottom-left corner: *Can't reach
+the dashboard server since 3:05 PM*. Everything else stays on screen, but it
+may be out of date. It clears as soon as the server answers again.
+
+## Comparing weather sources (optional)
+`scripts/compare-weather.js` logs, every hour, the nearest NWS station's
+reading, the NWS hourly forecast for your exact spot, and Open-Meteo's value,
+to `data/weather-compare.csv`. After a few days, `--summary` tells you how
+they compare.
+
+```bash
+node scripts/compare-weather.js --once
+```
+```bash
+node scripts/compare-weather.js --summary
+```
+
+For hourly logging on the LXC, run it from the `familydash` user's crontab
+(`sudo crontab -u familydash -e`), adding this line:
+
+```
+5 * * * * cd /opt/family-dashboard && /usr/bin/node scripts/compare-weather.js --once >/dev/null 2>&1
+```
+
+(Or run it without `--once` in a terminal; it keeps going and logs at 5 past
+each hour.) Remove the line again when you've seen enough. It doesn't affect
+the dashboard.
 
 ## Automatic page reloads
 The dashboard reloads itself once a night around 3 AM (clears Chromium's memory
