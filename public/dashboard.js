@@ -14,6 +14,7 @@ const CALENDAR_POLL_MS = 60 * 1000; // server refreshes from Google every 5 min
 const WEATHER_POLL_MS = 2 * 60 * 1000; // server refreshes weather every 15 min, alerts every 5
 const TODO_POLL_MS = 20 * 1000;        // phone edits show up within ~20 s
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const OFFLINE_AFTER_MS = 5 * 60 * 1000; // show "can't reach the server" after 5 min
 
 const $ = (id) => document.getElementById(id);
 
@@ -28,6 +29,7 @@ const state = {
   todoJson: '',
   appVersion: null,       // server start id; a change means "reload for new code"
   display: null,          // latest display settings (theme, dimming…)
+  lastContact: Date.now(), // last time any API call succeeded
 };
 
 // ---------------------------------------------------------------------------
@@ -50,7 +52,25 @@ function setText(node, text) {
 async function getJson(url) {
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
-  return res.json();
+  const data = await res.json();
+  state.lastContact = Date.now(); // the server answered
+  if (!$('offline-note').hidden) checkOffline();
+  return data;
+}
+
+/**
+ * If the server hasn't answered for a while, everything on screen may be old
+ * (the clock keeps ticking, so it wouldn't be obvious). Say so, quietly.
+ */
+function checkOffline() {
+  const note = $('offline-note');
+  const offline = Date.now() - state.lastContact > OFFLINE_AFTER_MS;
+  if (offline) {
+    const since = new Intl.DateTimeFormat('en-US', { timeZone: state.timezone, hour: 'numeric', minute: '2-digit' })
+      .format(new Date(state.lastContact));
+    setText(note, `⚠ Can't reach the dashboard server since ${since}`);
+  }
+  if (note.hidden === offline) note.hidden = !offline;
 }
 
 /** Black or white text, whichever reads better on a calendar color like "#4FC3F7". */
@@ -81,6 +101,7 @@ function tickClock() {
   if ($('clock-time').textContent !== hm) { // once a minute
     checkDailyReload(now);
     applyDim(now);
+    checkOffline();
   }
   setText($('clock-time'), hm);
   setText($('clock-ampm'), ampm);

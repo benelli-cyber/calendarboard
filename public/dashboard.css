@@ -487,6 +487,16 @@ html, body {
 /* Tighter title in the to-do panel to make room for a 4th item */
 .todos .section-title { margin-bottom: calc(4px * var(--s)); }
 
+/* ---------- "Can't reach the server" note (bottom-left page margin) ---------- */
+.offline-note {
+  position: fixed;
+  left: calc(36px * var(--s));
+  bottom: 3px;
+  font-size: 18px;
+  line-height: 26px;
+  color: #ffb74d;
+}
+
 /* ---------- Night dimming ----------
    One black layer with fixed opacity. Much cheaper on the Pi's GPU than a
    brightness filter, which would repaint the whole page on every change.
