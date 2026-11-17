@@ -29,15 +29,17 @@ everywhere.
   but correct time is: make sure the container's clock is synced (Proxmox
   containers use the host's clock).
 
-Open the container's console (or SSH in) and run everything below as root, or
-with `sudo`.
+Open the container's console (or SSH in) and run everything below as root.
+(Proxmox's Debian templates log you in as root and don't include `sudo`; step
+1.2 installs it, because later steps use `sudo -u familydash` to run commands
+as the app's user.)
 
 ### 1.2 Install Node.js 22 LTS and git
 
 Debian's own Node.js is too old, so use the NodeSource packages:
 
 ```bash
-apt update && apt install -y curl ca-certificates git
+apt update && apt install -y curl ca-certificates git sudo
 ```
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
