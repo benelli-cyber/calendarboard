@@ -21,7 +21,9 @@ everywhere.
 ### 1.1 Create the container (Proxmox)
 
 - Template: Debian 12 (or Ubuntu 24.04)
-- Resources: 1 CPU core, 512 MB RAM, 4 GB disk is plenty
+- Resources: 1 CPU core, 4 GB disk, and **1 GB RAM during install** (the
+  SQLite module may need compiling, which is memory-hungry). The running app
+  is happy with 512 MB, so you can lower it afterwards.
 - Network: give it a **fixed address**, either a static IP on the container
   or a DHCP reservation in your router. The Pi and phones need an address that
   never changes.
@@ -39,7 +41,7 @@ as the app's user.)
 Debian's own Node.js is too old, so use the NodeSource packages:
 
 ```bash
-apt update && apt install -y curl ca-certificates git sudo
+apt update && apt install -y curl ca-certificates git sudo python3 make g++
 ```
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
@@ -79,9 +81,11 @@ read-only *Contents* access to just this repo, as the password.
 cd /opt/family-dashboard && sudo -u familydash npm ci --omit=dev
 ```
 
-This downloads a prebuilt SQLite module for your system. If it complains about
-a missing compiler, install one and re-run the command:
-`apt install -y python3 make g++`.
+This installs the app's libraries. The SQLite module is either downloaded
+prebuilt or compiled on the spot (that's what `python3 make g++` from step 1.2
+are for); compiling takes a few minutes. It should end with
+`added 72 packages`. If it stops with `Killed`, give the container more memory
+(Proxmox → container → Resources → Memory, 1024 MB) and run it again.
 
 ### 1.5 Create the config file
 
