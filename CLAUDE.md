@@ -172,7 +172,7 @@ family-dashboard/
 
 ## Go-Live Checklist (remind the user before finishing all phases)
 Open items the user has asked to be reminded about. Raise any unchecked items at the end of each phase, and do not call the project finished until they are done.
-- [ ] **Weather location:** set the real `weather.lat` / `weather.lon` (and `weather.userAgent` with a contact address) in the LXC's `config.json`. Development used a public landmark (National Mall, DC) in `config.demo.json`.
+- [x] **Weather location:** set by the user on the LXC via the settings page (Nov 18 2026); the dashboard shows their weather and calendars.
 - [x] **Open-Meteo fallback:** verified live (real API response parsed correctly via `scripts/compare-weather.js`, Nov 14 2026). Nothing left to do.
 
 ## Testing & Verification
