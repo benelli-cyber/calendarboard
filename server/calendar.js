@@ -120,6 +120,7 @@ function expandCalendar(parsed, from, to) {
       if (inst.start >= to || end < from) continue;
       if (end.getTime() === from.getTime() && end > inst.start) continue; // ended exactly at window start
       out.push({
+        uid: inst.event?.uid || ev.uid, // used to look up the event's own Google color
         title: String(inst.summary || ev.summary || '(No title)').trim(),
         start: inst.start,
         end,
@@ -139,7 +140,8 @@ function overlapsDay(start, end, dayStart, dayEnd) {
 /**
  * Build per-day event lists for a date range.
  *
- * @param {Array<{name:string,color:string,parsed:object}>} sources
+ * @param {Array<{name:string,color:string,parsed:object,eventColor?:Function}>} sources
+ *   eventColor(ev) may return an event's own color (Google event colors), or null.
  * @param {object} opts
  * @param {Date}   [opts.now]       current time (for "today"/"past" flags)
  * @param {Date}   [opts.start]     first day shown (defaults to today)
@@ -207,7 +209,7 @@ function buildDays(sources, { now = new Date(), start, dayCount = 7, focusMonthO
         day.info.events.push({
           title: ev.title,
           calendar: src.name,
-          color: src.color,
+          color: (src.eventColor && src.eventColor(ev)) || src.color,
           allDay: allDayToday,
           time,
           shortTime,
@@ -274,8 +276,10 @@ class CalendarService {
    * @param {string} opts.rootDir          base for file: URLs
    * @param {number} [opts.intervalMs]     refresh interval (default 5 min)
    * @param {Function} [opts.fetchImpl]    injectable fetch (tests)
+   * @param {object} [opts.eventColors]     optional GoogleColors (per-event colors)
    */
-  constructor({ getConfig, cacheDir, rootDir, intervalMs = 5 * 60 * 1000, fetchImpl }) {
+  constructor({ getConfig, cacheDir, rootDir, intervalMs = 5 * 60 * 1000, fetchImpl, eventColors = null }) {
+    this.eventColors = eventColors;
     this.getConfig = getConfig;
     this.cacheDir = cacheDir;
     this.rootDir = rootDir;
@@ -340,13 +344,26 @@ class CalendarService {
     }
   }
 
-  /** Refresh all enabled calendars in parallel. Overlapping calls share one run. */
+  /** Refresh all enabled calendars (and event colors) in parallel. Overlapping calls share one run. */
   refreshAll() {
     if (!this.refreshing) {
-      this.refreshing = Promise.all(this.enabledCalendars().map((c) => this.refreshOne(c)))
-        .finally(() => { this.refreshing = null; });
+      const cals = this.enabledCalendars();
+      this.refreshing = Promise.all([
+        ...cals.map((c) => this.refreshOne(c)),
+        this.refreshColors(cals),
+      ]).finally(() => { this.refreshing = null; });
     }
     return this.refreshing;
+  }
+
+  /** Per-event Google colors (optional). Failures only mean events keep calendar colors. */
+  async refreshColors(cals) {
+    if (!this.eventColors) return;
+    try {
+      await this.eventColors.refresh(cals);
+    } catch (err) {
+      console.warn(`[colors] ${scrub(err.message)}`);
+    }
   }
 
   start() {
@@ -365,7 +382,7 @@ class CalendarService {
     const cfg = this.getConfig();
     const cals = this.enabledCalendars();
     // Recompute only when data, config, view, or the day changes.
-    const memoKey = `${this.version}|${dayKey(now)}|` +
+    const memoKey = `${this.version}|${this.eventColors?.version || 0}|${dayKey(now)}|` +
       cals.map((c) => `${calendarId(c.url)}${c.name}${c.color}`).join(',');
     const cached = this.memo.get(view);
     if (cached?.key === memoKey) return cached.value;
@@ -374,7 +391,16 @@ class CalendarService {
     const status = [];
     for (const cal of cals) {
       const s = this.state.get(calendarId(cal.url));
-      if (s?.parsed) sources.push({ name: cal.name, color: cal.color, parsed: s.parsed });
+      if (s?.parsed) {
+        sources.push({
+          name: cal.name,
+          color: cal.color,
+          parsed: s.parsed,
+          eventColor: this.eventColors
+            ? (ev) => this.eventColors.colorFor(cal.url, ev.uid, ev.start, ev.allDay)
+            : null,
+        });
+      }
       status.push({
         name: cal.name,
         color: cal.color,

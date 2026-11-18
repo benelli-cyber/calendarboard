@@ -4,3 +4,7 @@ config.json
 *.db-*
 data/
 *.log
+
+# Google service account key (secret) for per-event colors
+google-service-account.json
+*service-account*.json

@@ -19,6 +19,9 @@ const DEFAULTS = {
   timezone: 'America/New_York',
   calendars: [],
   weather: { lat: 0, lon: 0, userAgent: 'family-dashboard', units: 'imperial' },
+  // Optional per-event Google colors: a service account key file (deploy/GOOGLE-COLORS.md).
+  // Relative paths are inside the project folder. Feature is off while the file doesn't exist.
+  google: { serviceAccountFile: 'google-service-account.json' },
   display: {
     theme: 'dark', fontScale: 1.0, calendarView: 'month',
     // Night dimming (off by default): a dark layer over the dashboard between these times.
@@ -37,6 +40,7 @@ function normalize(raw) {
     ...raw,
     weather: { ...DEFAULTS.weather, ...(raw.weather || {}) },
     display: { ...DEFAULTS.display, ...(raw.display || {}) },
+    google: { ...DEFAULTS.google, ...(raw.google || {}) },
   };
 
   cfg.port = Number(cfg.port) || DEFAULTS.port;

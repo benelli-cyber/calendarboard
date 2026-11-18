@@ -15,6 +15,7 @@
  *   GET  /api/settings     editable settings (calendar URLs masked)
  *   PUT  /api/settings     save settings to config.json; applied live
  *   GET  /settings         settings page (public/settings.html)
+ *   GET  /api/event-colors Google per-event colors status (settings page)
  *   GET  /api/health       simple status check
  *
  * Run directly (`node server/index.js`) to start the server. Tests import
@@ -115,6 +116,11 @@ function createApp({ getConfig, setConfig, calendar, weather, todos }) {
 
   app.get('/api/settings', (req, res) => res.json(toSettings(getConfig())));
 
+  // Status of the optional Google per-event colors (never includes the key).
+  app.get('/api/event-colors', (req, res) => {
+    res.json(calendar.eventColors ? calendar.eventColors.status() : { configured: false });
+  });
+
   app.put('/api/settings', json, (req, res) => {
     let saved;
     try {
@@ -163,9 +169,16 @@ function main() {
   const { CalendarService } = require('./calendar');
   const { WeatherService } = require('./weather');
   const { TodoStore } = require('./todos');
+  const { GoogleColors } = require('./google-colors');
 
   const getConfig = () => config;
-  const calendar = new CalendarService({ getConfig, cacheDir: path.join(ROOT, 'data', 'calendar-cache'), rootDir: ROOT });
+  // Optional per-event Google colors; off until the key file exists (deploy/GOOGLE-COLORS.md).
+  const eventColors = new GoogleColors({
+    getKeyFile: () => path.resolve(ROOT, config.google.serviceAccountFile),
+  });
+  const calendar = new CalendarService({
+    getConfig, cacheDir: path.join(ROOT, 'data', 'calendar-cache'), rootDir: ROOT, eventColors,
+  });
   const weather = new WeatherService({ getConfig, cacheDir: path.join(ROOT, 'data') });
   const todos = new TodoStore(process.env.TODO_DB || path.join(ROOT, 'data', 'todos.db'));
 
