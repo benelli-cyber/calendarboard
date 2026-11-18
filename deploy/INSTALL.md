@@ -200,7 +200,8 @@ power cut the Pi never gets stuck on an error page if it boots before the LXC.
 
 First, **turn off whatever opens DAKboard now**: look in the same autostart
 file as below for a line with your DAKboard URL (or a `chromium` line) and
-delete it or put `#` in front of it.
+delete it or put `#` in front of it. If no autostart file mentions it, DAKboard
+is probably started by a service: see option D.
 
 Which file to edit depends on your Raspberry Pi OS desktop. Check with:
 
@@ -229,6 +230,39 @@ raspi-config). Add to `~/.config/lxsession/LXDE-pi/autostart`:
 ```
 @/home/pi/pi-kiosk.sh http://192.168.1.50:8080/
 ```
+
+If that file doesn't exist yet, copy the system one first, because a personal
+file *replaces* it entirely:
+`mkdir -p ~/.config/lxsession/LXDE-pi && cp /etc/xdg/lxsession/LXDE-pi/autostart ~/.config/lxsession/LXDE-pi/`
+
+**D) A systemd user service** (how DAKboard's Pi setup starts Chromium).
+Check with `systemctl --user list-unit-files --state=enabled`: if you see
+`dakboard.service` (or another kiosk service), don't use A–C. Instead,
+create `~/.config/systemd/user/family-dashboard-kiosk.service`:
+
+```
+[Unit]
+Description=Family Dashboard kiosk (Chromium)
+After=network.target
+
+[Service]
+ExecStart=/home/pi/pi-kiosk.sh http://192.168.1.50:8080/
+Restart=always
+RestartSec=5
+Environment=DISPLAY=:0
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+
+[Install]
+WantedBy=default.target
+```
+
+(`1000` is your user's id; check with `id -u`.) Then switch over:
+
+```bash
+systemctl --user daemon-reload && systemctl --user disable --now dakboard.service && pkill -f /usr/lib/chromium/chromium; systemctl --user enable --now family-dashboard-kiosk.service
+```
+
+To go back to DAKboard: `systemctl --user disable --now family-dashboard-kiosk.service && systemctl --user enable --now dakboard.service`
 
 Replace `/home/pi` if your username isn't `pi`.
 
