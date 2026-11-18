@@ -262,7 +262,17 @@ WantedBy=default.target
 systemctl --user daemon-reload && systemctl --user disable --now dakboard.service && pkill -f /usr/lib/chromium/chromium; systemctl --user enable --now family-dashboard-kiosk.service
 ```
 
-To go back to DAKboard: `systemctl --user disable --now family-dashboard-kiosk.service && systemctl --user enable --now dakboard.service`
+To go back to DAKboard, and to return to the dashboard (`pkill` closes the
+running Chromium window, which keeps running outside the service):
+
+```bash
+systemctl --user disable --now family-dashboard-kiosk.service && pkill -f /usr/lib/chromium/chromium; systemctl --user enable --now dakboard.service
+```
+```bash
+systemctl --user disable --now dakboard.service && pkill -f /usr/lib/chromium/chromium; systemctl --user enable --now family-dashboard-kiosk.service
+```
+
+Whichever one you switch to last is the one that starts after a reboot.
 
 Replace `/home/pi` if your username isn't `pi`.
 
