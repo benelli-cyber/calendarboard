@@ -167,15 +167,18 @@ rotation you already set up stays as it is.
 
 ### 2.1 Copy the kiosk launcher
 
-Get `deploy/pi-kiosk.sh` onto the Pi as `~/pi-kiosk.sh`, using either option:
+Get `deploy/pi-kiosk.sh` onto the Pi as `~/pi-kiosk.sh`. The simplest way is
+to paste it:
 
-- **Copy it from the LXC** (if you can SSH into the LXC), on the Pi:
-  ```bash
-  scp root@192.168.1.50:/opt/family-dashboard/deploy/pi-kiosk.sh ~/
-  ```
-- **Or paste it:** open the file on GitHub (`deploy/pi-kiosk.sh`), copy its
-  contents, then on the Pi run `nano ~/pi-kiosk.sh`, paste, and save
-  (Ctrl+O, Enter, Ctrl+X).
+1. On the Pi's browser or your computer, open `deploy/pi-kiosk.sh` on GitHub
+   (signed in, if the repo is private) and click the **copy** button (two
+   overlapping squares, top right of the file).
+2. On the Pi (terminal, or SSH from your computer as your normal Pi user):
+   `nano ~/pi-kiosk.sh`, paste (right-click, or Ctrl+Shift+V), then save with
+   Ctrl+O, Enter, Ctrl+X.
+
+(`scp root@<lxc-ip>:...` usually fails with "Permission denied": Debian's SSH
+doesn't allow password logins for root, which is a good default to keep.)
 
 Then make it executable:
 
