@@ -95,7 +95,8 @@ Top to bottom:
 - Small **Month | Week** toggle button in the bottom-right corner (inside the page margin)
 
 - Default **dark theme** (better on a 24/7 display); optional light theme
-- Base font size large (e.g., clock ~120px; month cells ~22px with titles wrapping to 2 lines, week columns ~25px); scale via config
+- Base font size large (e.g., clock ~120px; month-cell events ~18px with titles wrapping to 2 lines, week-column titles ~21px, at the user's request to match DAKboard); scale via config
+- The calendar panel uses nearly the full screen width (pulled into the page margins, 6px from each edge)
 - Night dimming on a schedule (`display.dimEnabled`, `dimStart`, `dimEnd`, `dimLevel`; off by default; may cross midnight): a single black overlay, set on the settings page
 - If the server can't be reached for 5+ minutes, a small amber note in the bottom-left margin says since when
 

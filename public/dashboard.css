@@ -184,7 +184,11 @@ html, body {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: calc(18px * var(--s)) calc(14px * var(--s)) calc(14px * var(--s));
+  /* Use (almost) the full screen width: pull the panel out into the page
+     margins, leaving 6px at each edge. */
+  margin: 0 calc(-30px * var(--s));
+  padding: calc(16px * var(--s)) calc(4px * var(--s)) calc(6px * var(--s));
+  border-radius: 12px;
 }
 
 .cal-header {
@@ -193,7 +197,8 @@ html, body {
   justify-content: space-between;
   align-items: baseline;
   gap: 20px;
-  padding: 0 calc(8px * var(--s)) calc(12px * var(--s));
+  /* 26px keeps the month title lined up with the clock above it */
+  padding: 0 calc(26px * var(--s)) calc(12px * var(--s));
 }
 
 .cal-title {
@@ -326,7 +331,7 @@ html, body {
    inline run ("● 9a Soccer practice"); all-day events are colored bars. */
 .view-month .cell-date { font-size: calc(28px * var(--s)); }
 .view-month .cev,
-.view-month .more { font-size: calc(22px * var(--s)); }
+.view-month .more { font-size: calc(18px * var(--s)); }
 .view-month .cev { margin-bottom: calc(6px * var(--s)); }
 .view-month .cev {
   display: -webkit-box;
@@ -347,9 +352,9 @@ html, body {
 .view-week .cell-date { font-size: calc(36px * var(--s)); margin-bottom: calc(10px * var(--s)); }
 .view-week .cev { flex-direction: column; align-items: stretch; gap: 0; margin-bottom: calc(14px * var(--s)); }
 .view-week .cev-dot { display: none; }
-.view-week .cev-time { font-size: calc(20px * var(--s)); white-space: normal; }
+.view-week .cev-time { font-size: calc(17px * var(--s)); white-space: normal; }
 .view-week .cev-title {
-  font-size: calc(25px * var(--s));
+  font-size: calc(21px * var(--s));
   white-space: normal;
   overflow-wrap: break-word; /* wrap between words; only split a word that can't fit at all */
   hyphens: auto;
@@ -358,8 +363,8 @@ html, body {
   -webkit-box-orient: vertical;
 }
 .view-week .cev:not(.all-day) { border-left: 6px solid var(--ev-color); padding-left: 6px; }
-.view-week .cev.all-day .cev-title { font-size: calc(22px * var(--s)); }
-.view-week .more { font-size: calc(22px * var(--s)); }
+.view-week .cev.all-day .cev-title { font-size: calc(18px * var(--s)); }
+.view-week .more { font-size: calc(18px * var(--s)); }
 
 /* ---------- 4 & 5. Bottom row: forecast + to-dos side by side (Phases 2–3) ---------- */
 
