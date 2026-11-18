@@ -291,15 +291,6 @@ html, body {
   line-height: 1.2;
 }
 
-/* Colored dot for timed events */
-.cev-dot {
-  flex: 0 0 auto;
-  width: 0.5em;
-  height: 0.5em;
-  border-radius: 50%;
-  align-self: center;
-}
-
 .cev-time {
   flex: 0 0 auto;
   color: var(--muted);
@@ -341,17 +332,11 @@ html, body {
   overflow-wrap: break-word;
 }
 .view-month .cev > span { display: inline; white-space: normal; }
-.view-month .cev:not(.all-day) .cev-dot {
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: 0.2em;
-}
 
 /* Week view: tall columns, bigger text, titles may wrap to 3 lines */
 .view-week .cell { padding: calc(10px * var(--s)) calc(8px * var(--s)) 0; }
 .view-week .cell-date { font-size: calc(36px * var(--s)); margin-bottom: calc(10px * var(--s)); }
 .view-week .cev { flex-direction: column; align-items: stretch; gap: 0; margin-bottom: calc(14px * var(--s)); }
-.view-week .cev-dot { display: none; }
 .view-week .cev-time { font-size: calc(17px * var(--s)); white-space: normal; }
 .view-week .cev-title {
   font-size: calc(21px * var(--s));
@@ -362,7 +347,8 @@ html, body {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
 }
-.view-week .cev:not(.all-day) { border-left: 6px solid var(--ev-color); padding-left: 6px; }
+/* Timed events are drawn in their event color (set inline); the time inherits it. */
+.cev.timed .cev-time { color: inherit; }
 .view-week .cev.all-day .cev-title { font-size: calc(18px * var(--s)); }
 .view-week .more { font-size: calc(18px * var(--s)); }
 

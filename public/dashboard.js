@@ -264,13 +264,16 @@ function eventItem(ev) {
     li.style.background = ev.color;
     li.style.color = textColorFor(ev.color);
     li.append(el('span', 'cev-title', ev.title));
-  } else if (state.view === 'month') {
-    const dot = el('span', 'cev-dot');
-    dot.style.background = ev.color;
-    // The ' ' text node lets the line wrap between the time and the title.
-    li.append(dot, el('span', 'cev-time', ev.shortTime), ' ', el('span', 'cev-title', ev.title));
   } else {
-    li.append(el('span', 'cev-time', ev.time), el('span', 'cev-title', ev.title));
+    // Timed events: time and title written in the event's color (like DAKboard).
+    li.classList.add('timed');
+    li.style.color = ev.color;
+    if (state.view === 'month') {
+      // The ' ' text node lets the line wrap between the time and the title.
+      li.append(el('span', 'cev-time', ev.shortTime), ' ', el('span', 'cev-title', ev.title));
+    } else {
+      li.append(el('span', 'cev-time', ev.time), el('span', 'cev-title', ev.title));
+    }
   }
   return li;
 }
