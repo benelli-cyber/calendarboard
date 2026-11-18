@@ -61,7 +61,7 @@ if [ -z "$BROWSER" ]; then
   exit 1
 fi
 
-exec "$BROWSER" \
+"$BROWSER" \
   --kiosk \
   --noerrdialogs \
   --disable-infobars \
@@ -70,4 +70,17 @@ exec "$BROWSER" \
   --overscroll-history-navigation=0 \
   --check-for-update-interval=31536000 \
   --no-first-run \
-  "$URL"
+  "$URL" &
+
+# 5) Stay running for as long as the browser is open.
+#    Chromium moves itself into a separate process right after starting, so the
+#    launcher above exits almost immediately. If this script exited too, the
+#    systemd service would think Chromium had closed and relaunch it every few
+#    seconds (the page would keep reloading). Instead, watch the real browser
+#    process; when it's gone (crash, or closed), exit so the service restarts it.
+sleep 20
+while pgrep -f "chromium.*--kiosk" >/dev/null; do
+  sleep 10
+done
+echo "Chromium is no longer running"
+exit 1
