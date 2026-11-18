@@ -225,9 +225,12 @@ class GoogleColors {
         if (before !== JSON.stringify([...instances])) changed = true;
         this.errors.delete(cal.name);
       } catch (err) {
-        const msg = err.status === 404 || err.status === 403
+        // 404/403 usually mean "calendar not shared with the robot account"; but a
+        // 403 can also mean the Calendar API isn't enabled, so show Google's words then.
+        const apiOff = /disabled|has not been used|not enabled/i.test(err.message);
+        const msg = (err.status === 404 || err.status === 403) && !apiOff
           ? `not shared with ${key.client_email} yet`
-          : err.message;
+          : err.message.slice(0, 200);
         this.errors.set(cal.name, msg);
         console.warn(`[colors] "${cal.name}": ${msg}`); // keep its previous colors
       }

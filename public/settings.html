@@ -103,6 +103,12 @@
 
     .status { margin-top: 10px; font-size: 15px; color: var(--muted); }
 
+    /* Google per-event colors status */
+    .event-colors { margin-top: 16px; font-size: 15px; color: var(--muted); }
+    .event-colors .robot { user-select: all; color: var(--text); overflow-wrap: anywhere; }
+    .event-colors .warn { color: #ffb74d; }
+    .event-colors .ok { color: var(--ok); }
+
     /* Night dimming */
     .switch-row { display: flex; align-items: center; gap: 10px; min-height: 44px; }
     .switch-row input { width: 24px; height: 24px; accent-color: var(--accent); }
@@ -162,6 +168,7 @@
       </p>
       <div id="calendars"></div>
       <button type="button" id="add-calendar" class="btn">+ Add calendar</button>
+      <div id="event-colors" class="event-colors"></div>
     </section>
 
     <!-- Display -->

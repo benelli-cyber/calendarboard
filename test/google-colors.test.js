@@ -51,7 +51,7 @@ const API_ITEMS_PAGE2 = [
 ];
 
 /** Fake fetch for the iCal feed, Google sign-in, and the Calendar API. */
-function fakeGoogle({ shared = true, signInOk = true } = {}) {
+function fakeGoogle({ shared = true, signInOk = true, apiEnabled = true } = {}) {
   const calls = { token: 0, events: 0 };
   const json = (status, body) => ({ ok: status < 400, status, json: async () => body, text: async () => JSON.stringify(body) });
   const fn = async (url, opts = {}) => {
@@ -70,6 +70,9 @@ function fakeGoogle({ shared = true, signInOk = true } = {}) {
       calls.events++;
       assert.equal(opts.headers.Authorization, 'Bearer tok-123');
       assert.ok(url.includes(`/calendars/${encodeURIComponent(CAL_ID)}/events?`), 'calendar id taken from the iCal URL');
+      if (!apiEnabled) {
+        return json(403, { error: { message: 'Google Calendar API has not been used in project 123 before or it is disabled.' } });
+      }
       if (!shared) return json(404, { error: { message: 'Not Found' } });
       const u = new URL(url);
       assert.equal(u.searchParams.get('singleEvents'), 'true');
@@ -137,6 +140,12 @@ test('calendar not shared with the robot account: clear message, calendar still 
   const st = eventColors.status();
   assert.equal(st.ok, false);
   assert.match(st.calendarErrors.Family, /not shared with dashboard-robot@my-project\.iam\.gserviceaccount\.com/);
+});
+
+test('Calendar API not enabled: Google\'s own message is shown (not "not shared")', async () => {
+  const { svc, eventColors } = setup({ apiEnabled: false });
+  await svc.refreshAll();
+  assert.match(eventColors.status().calendarErrors.Family, /Google Calendar API has not been used/);
 });
 
 test('sign-in failure keeps the colors from the last good refresh', async () => {

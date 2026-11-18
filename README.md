@@ -46,6 +46,13 @@ see the "Last updated" hint for a calendar that keeps failing.
 `config.json` holds the secret URLs. It is git-ignored, is never sent to the
 browser, and the URLs are never written to logs.
 
+## Google event colors (optional)
+Google's iCal addresses don't include the color you give a single event. To
+show those colors, follow [`deploy/GOOGLE-COLORS.md`](deploy/GOOGLE-COLORS.md):
+about 15 minutes to create a free read-only Google "robot" account, share
+your calendars with it, and put its key file on the LXC. The settings page
+shows whether it's working. Without it, events use their calendar's color.
+
 ## Night dimming
 Turn it on in **Settings → Display → Night dimming**: pick the hours (they can
 cross midnight, e.g. 11 PM to 6 AM) and how dark. A black layer covers the

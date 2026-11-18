@@ -151,6 +151,39 @@ function showDim() {
   $('dimLevel-value').textContent = `${Math.round($('dimLevel').value * 100)}%`;
 }
 
+/** Google per-event colors: on/off, the robot account to share calendars with, problems. */
+async function showEventColors() {
+  const box = $('event-colors');
+  let st;
+  try {
+    st = await (await fetch('/api/event-colors', { cache: 'no-store' })).json();
+  } catch {
+    return;
+  }
+  const lines = [];
+  if (!st.configured) {
+    lines.push(el('div', null,
+      "Event colors from Google: off. Events use their calendar's color. To show each event's own " +
+      'Google color, follow deploy/GOOGLE-COLORS.md in the project.'));
+  } else {
+    const head = el('div');
+    if (st.error) head.append(el('span', 'warn', `Event colors from Google: ${st.error}`));
+    else if (!st.updatedAt) head.append('Event colors from Google: checking…');
+    else if (st.ok) head.append(el('span', 'ok', 'Event colors from Google: on ✓'));
+    else head.append(el('span', 'warn', 'Event colors from Google: some calendars need attention'));
+    lines.push(head);
+    if (st.serviceAccount) {
+      const share = el('div', null, 'Share each calendar (See all event details) with: ');
+      share.append(el('span', 'robot', st.serviceAccount));
+      lines.push(share);
+    }
+    for (const [name, msg] of Object.entries(st.calendarErrors || {})) {
+      lines.push(el('div', 'warn', `${name}: ${msg}`));
+    }
+  }
+  box.replaceChildren(...lines);
+}
+
 /** Show what the dashboard's weather looks like right now (confirms the location works). */
 async function showWeatherStatus() {
   const box = $('weather-status');
@@ -247,6 +280,7 @@ async function load() {
     if (!res.ok) throw new Error();
     render(await res.json());
     showWeatherStatus();
+    showEventColors();
   } catch {
     setMessage("Can't load settings. Are you on the home network?", 'error');
   }

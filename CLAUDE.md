@@ -3,7 +3,7 @@
 ## Project Overview
 A self-hosted family dashboard replacing DAKboard. Displays time, date, Google Calendar events, accurate local weather, and a shared family to-do list. The backend runs in a Proxmox LXC; a Raspberry Pi 3B only displays the page in Chromium kiosk mode.
 
-Family members keep adding events to the shared Google Calendar from their phones as they do today. The dashboard is **read-only** for calendars and needs no Google OAuth.
+Family members keep adding events to the shared Google Calendar from their phones as they do today. The dashboard is **read-only** for calendars and needs no Google OAuth. **Optional (user-approved):** per-event Google colors via a read-only Google *service account* (`server/google-colors.js`, setup in `deploy/GOOGLE-COLORS.md`); events still come from iCal, only colors come from the Calendar API.
 
 ## Hardware & Display Constraints
 - **Display device:** Raspberry Pi 3B (1 GB RAM, weak GPU), Chromium full-screen kiosk
@@ -56,7 +56,7 @@ Family phones ──> http://<lxc-ip>:<port>/todo  (LAN now, Tailscale later)
 - Switch views via `display.calendarView` (`"month"` | `"week"`) in config, or the small **Month | Week** button at the bottom-right of the dashboard. The button saves the choice on the server (`POST /api/display`), so clicking it from any phone/computer on the LAN also switches the Pi within ~15 s
 - Days whose events don't fit in a cell show "+N more"
 - Correctly handle: recurring events, all-day events, multi-day events (show on each day spanned), cancelled instances, timezone conversion
-- Each event: calendar color, time (or solid colored bar for all-day), title
+- Each event: its own Google color if set (optional service account), else its calendar's color. Timed events: time + title written in that color (DAKboard style); all-day events: solid colored bar
 - **Resilience:** if a fetch fails, keep serving the last good data. Never show a blank calendar. Show a small, subtle "last updated" indicator if data is stale (>30 min).
 
 ### 3. Weather
@@ -128,6 +128,7 @@ Top to bottom:
 
 ## Security
 - Secret iCal URLs grant read access to calendars: **never commit, never log, never send to the front end**
+- The Google service account key file (`google-service-account.json`, git-ignored, chmod 600) is a secret too: never commit, log, or send it; only the robot's email is shown on the settings page
 - App is **LAN-only**. Never suggest port forwarding.
 - Remote access (Phase 6, postponed) is via **Tailscale** only, never `tailscale funnel`
 - Sanitize to-do input (escape HTML on render)
