@@ -57,7 +57,8 @@ Family phones ──> http://<lxc-ip>:<port>/todo  (LAN now, Tailscale later)
 - Switch views via `display.calendarView` (`"4weeks"` | `"3weeks"` | `"week"`) in config, or the small **4 Weeks | 3 Weeks | Week** button at the bottom-right of the dashboard. The button saves the choice on the server (`POST /api/display`), so clicking it from any phone/computer on the LAN also switches the Pi within ~15 s
 - Days whose events don't fit in a cell show "+N more"
 - Correctly handle: recurring events, all-day events, multi-day events (show on each day spanned), cancelled instances, timezone conversion
-- Each event: its own Google color if set (optional service account), else its calendar's color. Timed events: time + title written in that color (DAKboard style). All-day events: solid bar in **one shared color** so they stand out (`display.allDayColor`, default Google "Tangerine" `#F4511E`, white text; `""` = calendar colors); an event's own Google color still wins
+- **Keyword color rules** (`config.colorRules`, `server/color-rules.js`, edited on the settings page): "title contains word → color", first match wins, whole words/any case/plurals; `weekends: false` (default) leaves Sat/Sun events alone. Starter rules: Appointments pink `#E91E63`, Food yellow `#F6BF26`. The family's names rule lives only in their LXC config (keep children's names out of the public repo)
+- Each event: its own Google color if set (optional service account), else the first matching keyword rule, else its calendar's color. Timed events: time + title written in that color (DAKboard style). All-day events: solid bar in **one shared color** so they stand out (`display.allDayColor`, default Google "Tangerine" `#F4511E`, white text; `""` = calendar colors); an event's own Google color still wins
 - **Resilience:** if a fetch fails, keep serving the last good data. Never show a blank calendar. Show a small, subtle "last updated" indicator if data is stale (>30 min).
 
 ### 3. Weather
@@ -82,7 +83,7 @@ Family phones ──> http://<lxc-ip>:<port>/todo  (LAN now, Tailscale later)
 
 ### 5. Settings Page (`/settings`)
 - Simple form, phone/desktop friendly
-- Edit: calendar names/colors/enabled, calendar view (4 weeks/3 weeks/week), weather location, theme (dark/light), font scale
+- Edit: calendar names/colors/enabled, keyword color rules, all-day color, calendar view (4 weeks/3 weeks/week), weather location, theme (dark/light), font scale
 - Saves to `config.json` (secret iCal URLs can be added but are masked when displayed)
 - Dashboard applies changes on next poll without a manual reload (`/api/config` carries a `revision` hash; when it changes the dashboard re-fetches calendar + weather)
 - Weather location accepts coordinates pasted from Google Maps; the page shows live weather to confirm the location

@@ -46,6 +46,15 @@ see the "Last updated" hint for a calendar that keeps failing.
 `config.json` holds the secret URLs. It is git-ignored, is never sent to the
 browser, and the URLs are never written to logs.
 
+## Color rules
+Color events by words in their title: **Settings → Color rules**. Each rule
+has a color and a list of words; the first matching rule wins (reorder with
+↑ ↓). Matching is by whole word, any capitalization, plurals included
+("dinner" matches "Dinners", "Lily" matches "Lily's" but not "family").
+Starter rules color appointments pink and food yellow. By default rules skip
+Saturday/Sunday events (tick "Also color Saturday & Sunday events" to change
+that), and all-day events keep the all-day color.
+
 ## Google event colors (optional)
 Google's iCal addresses don't include the color you give a single event. To
 show those colors, follow [`deploy/GOOGLE-COLORS.md`](deploy/GOOGLE-COLORS.md):

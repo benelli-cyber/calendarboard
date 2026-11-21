@@ -113,6 +113,19 @@
     .allday-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .allday-row .cal-color:disabled { opacity: 0.35; }
 
+    /* Color rules */
+    .rule { border: 2px solid var(--faint); border-radius: 12px; padding: 10px; margin-bottom: 10px; }
+    .rule-row { display: flex; align-items: center; gap: 6px; }
+    .rule-name { flex: 1; min-width: 0; }
+    .rule-btn { flex: 0 0 auto; width: 40px; height: 48px; border: 0; background: none; color: var(--muted); font-size: 20px; }
+    .rule-btn:disabled { opacity: 0.25; }
+    .rule-words {
+      font: inherit; font-size: 16px; width: 100%; min-height: 72px; margin-top: 8px;
+      color: var(--text); background: var(--bg); border: 2px solid var(--faint); border-radius: 10px; padding: 8px 10px;
+      resize: vertical;
+    }
+    .rule-words:focus { outline: none; border-color: var(--accent); }
+
     /* Night dimming */
     .switch-row { display: flex; align-items: center; gap: 10px; min-height: 44px; }
     .switch-row input { width: 24px; height: 24px; accent-color: var(--accent); }
@@ -173,6 +186,19 @@
       <div id="calendars"></div>
       <button type="button" id="add-calendar" class="btn">+ Add calendar</button>
       <div id="event-colors" class="event-colors"></div>
+    </section>
+
+    <!-- Keyword color rules -->
+    <section>
+      <h2>Color rules</h2>
+      <p class="hint">
+        Color events by words in their title. The <b>first</b> matching rule wins, so use ↑ ↓ to
+        put the most important rules on top. Whole words, any capitalization; plurals count
+        ("dinner" also matches "dinners"). All-day events keep the all-day color.
+      </p>
+      <div id="color-rules"></div>
+      <button type="button" id="add-rule" class="btn">+ Add rule</button>
+      <label class="switch-row" style="margin-top:10px"><input type="checkbox" id="rulesWeekends"> Also color Saturday &amp; Sunday events</label>
     </section>
 
     <!-- Display -->

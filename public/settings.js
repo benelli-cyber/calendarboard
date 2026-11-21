@@ -124,11 +124,90 @@ function readCalendars() {
 }
 
 // ---------------------------------------------------------------------------
+// Keyword color rules
+// ---------------------------------------------------------------------------
+
+function ruleButton(text, label, onClick) {
+  const b = el('button', 'rule-btn', text);
+  b.type = 'button';
+  b.setAttribute('aria-label', label);
+  b.addEventListener('click', onClick);
+  return b;
+}
+
+/** Disable ↑ on the first rule and ↓ on the last. */
+function updateRuleButtons() {
+  const cards = [...document.querySelectorAll('.rule')];
+  cards.forEach((card, i) => {
+    card.querySelector('.up').disabled = i === 0;
+    card.querySelector('.down').disabled = i === cards.length - 1;
+  });
+}
+
+function ruleCard(rule = {}) {
+  const card = el('div', 'rule');
+  const row = el('div', 'rule-row');
+
+  const color = el('input', 'cal-color rule-color');
+  color.type = 'color';
+  color.value = (rule.color || '#e91e63').toLowerCase();
+  color.setAttribute('aria-label', 'Rule color');
+
+  const name = el('input', 'rule-name');
+  name.type = 'text';
+  name.maxLength = 40;
+  name.placeholder = 'Name (e.g. Food)';
+  name.value = rule.name || '';
+  name.setAttribute('aria-label', 'Rule name');
+
+  const up = ruleButton('↑', 'Move rule up', () => {
+    if (card.previousElementSibling) card.parentNode.insertBefore(card, card.previousElementSibling);
+    updateRuleButtons();
+  });
+  up.classList.add('up');
+  const down = ruleButton('↓', 'Move rule down', () => {
+    if (card.nextElementSibling) card.parentNode.insertBefore(card.nextElementSibling, card);
+    updateRuleButtons();
+  });
+  down.classList.add('down');
+  const remove = ruleButton('✕', 'Delete rule', () => {
+    if (confirm(`Delete the rule "${name.value.trim() || 'unnamed'}"?`)) {
+      card.remove();
+      updateRuleButtons();
+    }
+  });
+
+  row.append(color, name, up, down, remove);
+
+  const words = el('textarea', 'rule-words');
+  words.placeholder = 'Words, separated by commas: lunch, dinner, pizza, ice cream';
+  words.value = (rule.keywords || []).join(', ');
+  words.setAttribute('aria-label', 'Words for this rule');
+
+  card.append(row, words);
+  return card;
+}
+
+function readRules() {
+  return {
+    weekends: $('rulesWeekends').checked,
+    rules: [...document.querySelectorAll('.rule')].map((card) => ({
+      name: card.querySelector('.rule-name').value,
+      color: card.querySelector('.rule-color').value,
+      keywords: card.querySelector('.rule-words').value, // the server splits on commas
+    })),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Load / render / save
 // ---------------------------------------------------------------------------
 
 function render(s) {
   $('calendars').replaceChildren(...s.calendars.map(calendarCard));
+  $('color-rules').replaceChildren(...(s.colorRules?.rules || []).map(ruleCard));
+  $('rulesWeekends').checked = Boolean(s.colorRules?.weekends);
+  updateRuleButtons();
   document.querySelector(`input[name=calendarView][value="${s.display.calendarView}"]`).checked = true;
   document.querySelector(`input[name=theme][value=${s.display.theme}]`).checked = true;
   $('fontScale').value = s.display.fontScale;
@@ -216,8 +295,12 @@ function clearInvalid() {
 function markInvalid(field) {
   if (!field) return;
   let input = null;
+  const r = /^colorRules\.(\d+)\.(\w+)$/.exec(field);
   const m = /^calendars\.(\d+)\.(\w+)$/.exec(field);
-  if (m) {
+  if (r) {
+    const card = document.querySelectorAll('.rule')[Number(r[1])];
+    input = card ? card.querySelector(r[2] === 'color' ? '.rule-color' : '.rule-words') : null;
+  } else if (m) {
     const card = document.querySelectorAll('.cal')[Number(m[1])];
     const cls = { name: 'cal-name', color: 'cal-color', url: 'cal-url-input' }[m[2]];
     input = card && cls ? card.querySelector(`.${cls}`) : null;
@@ -245,6 +328,7 @@ async function save(event) {
 
   const body = {
     calendars: readCalendars(),
+    colorRules: readRules(),
     display: {
       calendarView: document.querySelector('input[name=calendarView]:checked').value,
       theme: document.querySelector('input[name=theme]:checked').value,
@@ -299,6 +383,12 @@ async function load() {
   }
 }
 
+$('add-rule').addEventListener('click', () => {
+  const card = ruleCard({});
+  $('color-rules').append(card);
+  updateRuleButtons();
+  card.querySelector('.rule-name').focus();
+});
 $('add-calendar').addEventListener('click', () => {
   const card = calendarCard({});
   $('calendars').append(card);
