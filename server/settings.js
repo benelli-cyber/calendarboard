@@ -9,6 +9,7 @@
  * that id and keeps its URL unless a new one is typed in.
  */
 const { calendarId } = require('./calendar');
+const { MAX_RULES, MAX_KEYWORDS, MAX_WORD } = require('./color-rules');
 const { CALENDAR_VIEWS } = require('./config');
 
 /** A bad field in the settings form → HTTP 400 with a message for that field. */
@@ -56,6 +57,7 @@ function toSettings(cfg) {
       dimLevel: cfg.display.dimLevel,
       allDayColor: cfg.display.allDayColor,
     },
+    colorRules: cfg.colorRules,
     weather: {
       lat: cfg.weather.lat,
       lon: cfg.weather.lon,
@@ -121,6 +123,27 @@ function applySettings(raw, input) {
 
       return { ...base, name, url, color: c.color.toUpperCase(), enabled: c.enabled !== false };
     });
+  }
+
+  // ----- Keyword color rules -----
+  if (input.colorRules !== undefined) {
+    const cr = input.colorRules || {};
+    if (!Array.isArray(cr.rules)) throw new SettingsError('colorRules', 'Color rules must be a list');
+    if (cr.rules.length > MAX_RULES) throw new SettingsError('colorRules', `At most ${MAX_RULES} rules`);
+    raw.colorRules = {
+      weekends: cr.weekends === true,
+      rules: cr.rules.map((r, i) => {
+        const f = (name) => `colorRules.${i}.${name}`;
+        if (!HEX_COLOR.test(r?.color)) throw new SettingsError(f('color'), 'Pick a color for this rule');
+        // Keywords may arrive as a list or as "word, word, phrase".
+        const list = Array.isArray(r.keywords) ? r.keywords : String(r.keywords || '').split(',');
+        const keywords = list.map((k) => String(k).trim()).filter(Boolean);
+        if (!keywords.length) throw new SettingsError(f('keywords'), 'Add at least one word to this rule');
+        if (keywords.length > MAX_KEYWORDS) throw new SettingsError(f('keywords'), `At most ${MAX_KEYWORDS} words per rule`);
+        if (keywords.some((k) => k.length > MAX_WORD)) throw new SettingsError(f('keywords'), `Words can be at most ${MAX_WORD} characters`);
+        return { name: String(r.name || '').trim().slice(0, 40), color: r.color.toUpperCase(), keywords };
+      }),
+    };
   }
 
   // ----- Display -----

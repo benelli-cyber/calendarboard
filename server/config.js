@@ -35,6 +35,44 @@ const DEFAULTS = {
 
 const CALENDAR_VIEWS = ['4weeks', '3weeks', 'week'];
 
+// Starter keyword color rules (server/color-rules.js), used until the user saves
+// their own on the settings page. First match wins.
+const DEFAULT_COLOR_RULES = {
+  weekends: false, // leave Saturday/Sunday events alone (mostly one-off plans)
+  rules: [
+    {
+      name: 'Appointments',
+      color: '#E91E63',
+      keywords: ['appointment', 'appt', 'doctor', 'dr', 'dentist', 'orthodontist', 'pediatrician', 'therapy',
+        'therapist', 'allergist', 'ENT', 'checkup', 'vet', 'manicure', 'pedicure', 'nails', 'haircut', 'salon'],
+    },
+    {
+      name: 'Food',
+      color: '#F6BF26',
+      keywords: ['breakfast', 'brunch', 'lunch', 'dinner', 'supper', 'food', 'pizza', 'restaurant', 'cafe',
+        'coffee', 'bakery', 'potluck', 'bbq', 'barbecue', 'cookout', 'picnic', 'tacos', 'sushi', 'burger',
+        'dessert', 'ice cream', 'meal', 'grocery', 'groceries', 'snack'],
+    },
+  ],
+};
+
+/** Keep only well-formed color rules (bad entries are dropped, not fatal). */
+function cleanColorRules(cr) {
+  const { MAX_RULES, MAX_KEYWORDS, MAX_WORD } = require('./color-rules');
+  return {
+    weekends: cr?.weekends === true,
+    rules: (Array.isArray(cr?.rules) ? cr.rules : [])
+      .filter((r) => r && HEX_COLOR.test(r.color) && Array.isArray(r.keywords))
+      .slice(0, MAX_RULES)
+      .map((r) => ({
+        name: String(r.name || '').trim().slice(0, 40),
+        color: r.color.toUpperCase(),
+        keywords: r.keywords.map((k) => String(k).trim().slice(0, MAX_WORD)).filter(Boolean).slice(0, MAX_KEYWORDS),
+      }))
+      .filter((r) => r.keywords.length),
+  };
+}
+
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
 /** Fill in defaults and fix up obviously bad values so the app keeps running. */
@@ -73,6 +111,9 @@ function normalize(raw) {
   if (!HH_MM.test(cfg.display.dimEnd)) cfg.display.dimEnd = DEFAULTS.display.dimEnd;
   const level = Number(cfg.display.dimLevel);
   cfg.display.dimLevel = Number.isFinite(level) ? Math.min(Math.max(level, 0.2), 0.9) : DEFAULTS.display.dimLevel;
+
+  // No saved rules yet → starter rules. An empty list saved by the user is respected.
+  cfg.colorRules = cleanColorRules(raw.colorRules === undefined ? DEFAULT_COLOR_RULES : raw.colorRules);
 
   cfg.calendars = (Array.isArray(cfg.calendars) ? cfg.calendars : [])
     .filter((c) => c && typeof c.url === 'string' && c.url.trim())

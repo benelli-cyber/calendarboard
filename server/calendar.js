@@ -25,6 +25,7 @@ const path = require('path');
 const crypto = require('crypto');
 const ical = require('node-ical');
 const { startOfDay, dayKey, daysBetween } = require('./dates');
+const { compileRules, ruleColor } = require('./color-rules');
 
 const FETCH_TIMEOUT_MS = 20_000;
 const STALE_AFTER_MS = 30 * 60 * 1000; // show "last updated" hint after 30 min
@@ -148,10 +149,11 @@ function overlapsDay(start, end, dayStart, dayEnd) {
  * @param {Date}   [opts.start]     first day shown (defaults to today)
  * @param {number} [opts.dayCount]  number of days (default 7)
  * @param {Date}   [opts.focusMonthOf] days outside this date's month get inMonth=false
+ * @param {object} [opts.rules]     compiled keyword color rules (color-rules.js)
  * @param {string} opts.timezone
  * @returns {Array<object>} one entry per day
  */
-function buildDays(sources, { now = new Date(), start, dayCount = 7, focusMonthOf, timezone }) {
+function buildDays(sources, { now = new Date(), start, dayCount = 7, focusMonthOf, timezone, rules = null }) {
   const f = makeFormatters(timezone);
   const first = startOfDay(start || now);
   const windowEnd = startOfDay(first, dayCount);
@@ -211,7 +213,8 @@ function buildDays(sources, { now = new Date(), start, dayCount = 7, focusMonthO
         day.info.events.push({
           title: ev.title,
           calendar: src.name,
-          color: ownColor || src.color,
+          // Own Google color → first matching keyword rule (per day: weekends may be skipped) → calendar color
+          color: ownColor || ruleColor(rules, ev.title, day.start) || src.color,
           ownColor: Boolean(ownColor), // true = the event's own Google color (wins over the all-day color)
           allDay: allDayToday,
           time,
@@ -385,7 +388,7 @@ class CalendarService {
     const cfg = this.getConfig();
     const cals = this.enabledCalendars();
     // Recompute only when data, config, view, or the day changes.
-    const memoKey = `${this.version}|${this.eventColors?.version || 0}|${dayKey(now)}|` +
+    const memoKey = `${this.version}|${this.eventColors?.version || 0}|${dayKey(now)}|${JSON.stringify(cfg.colorRules || null)}|` +
       cals.map((c) => `${calendarId(c.url)}${c.name}${c.color}`).join(',');
     const cached = this.memo.get(view);
     if (cached?.key === memoKey) return cached.value;
@@ -418,6 +421,7 @@ class CalendarService {
       start: range.start,
       dayCount: range.dayCount,
       timezone: cfg.timezone,
+      rules: compileRules(cfg.colorRules),
     });
 
     // "updatedAt" = the OLDEST successful fetch among calendars, so staleness of any one shows.
