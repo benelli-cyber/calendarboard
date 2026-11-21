@@ -5,8 +5,8 @@
  *   GET  /                 dashboard (public/index.html, portrait 1080×1920)
  *   GET  /todo             mobile to-do page (public/todo.html)
  *   GET  /api/config       display settings (no secrets)
- *   GET  /api/calendar     calendar days; ?view=month|week (default: config setting)
- *   POST /api/display      { calendarView: "month"|"week" } – the on-screen toggle button
+ *   GET  /api/calendar     calendar days; ?view=4weeks|3weeks|week (default: config setting)
+ *   POST /api/display      { calendarView: "4weeks"|"3weeks"|"week" } – the on-screen toggle button
  *   GET  /api/weather      current conditions, today, 5-day forecast, active alerts
  *   GET  /api/todos        open items + items checked in the last 24 h
  *   POST /api/todos        { text, addedBy? } → new item

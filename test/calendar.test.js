@@ -102,18 +102,19 @@ test('all-day events sort before timed events', () => {
   assert.equal(today[0].time, 'All day');
 });
 
-test('month view: whole Sun–Sat weeks covering the month', () => {
-  // Nov 2026: the 1st is a Sunday, the 30th a Monday → Nov 1 – Dec 5 (5 weeks)
-  let r = viewRange('month', NOW, TZ);
-  assert.equal(r.title, 'November 2026');
-  assert.equal(r.start.toDateString(), 'Sun Nov 01 2026');
-  assert.equal(r.dayCount, 35);
-  // Aug 2026: the 1st is a Saturday → Jul 26 – Sep 5 (6 weeks)
-  r = viewRange('month', new Date('2026-08-15T12:00:00-04:00'), TZ);
-  assert.equal(r.start.toDateString(), 'Sun Jul 26 2026');
-  assert.equal(r.dayCount, 42);
-  // Feb 2026: starts Sunday, 28 days → exactly 4 weeks
-  assert.equal(viewRange('month', new Date('2026-02-10T12:00:00-05:00'), TZ).dayCount, 28);
+test('4-week view: always 4 Sun–Sat rows, across month boundaries', () => {
+  let r = viewRange('4weeks', NOW, TZ); // Sat Nov 14
+  assert.equal(r.start.toDateString(), 'Sun Nov 08 2026');
+  assert.equal(r.dayCount, 28);
+  assert.equal(r.title, 'Nov 8 – Dec 5, 2026');
+  // November 2026 spans 5 calendar rows, but this view stays at 4
+  r = viewRange('4weeks', new Date('2026-11-01T12:00:00-05:00'), TZ);
+  assert.equal(r.dayCount, 28);
+  assert.equal(r.title, 'Nov 1 – 28, 2026');
+  // Across New Year
+  r = viewRange('4weeks', new Date('2026-12-30T12:00:00-05:00'), TZ);
+  assert.equal(r.start.toDateString(), 'Sun Dec 27 2026');
+  assert.equal(r.title, 'Dec 27, 2026 – Jan 23, 2027');
 });
 
 test('week view: rolling 7 days starting today', () => {
@@ -148,8 +149,8 @@ test('3-week payload: 21 days, next month not dimmed, events placed', async () =
   assert.ok(p.days.find((d) => d.date === '2026-12-05').events.some((e) => e.title === 'Soccer practice'));
 });
 
-test('month grid: flags for today, past days, and days outside the month', () => {
-  const r = viewRange('month', NOW, TZ);
+test('grid flags: today, past days, and (optional) days outside a focus month', () => {
+  const r = viewRange('4weeks', NOW, TZ);
   const sources = ['recurring', 'allday-multiday'].map((n) => ({ name: n, color: '#fff', parsed: parseIcs(fixture(n)) }));
   const days = buildDays(sources, { now: NOW, start: r.start, dayCount: r.dayCount, focusMonthOf: NOW, timezone: TZ });
   const byDate = Object.fromEntries(days.map((d) => [d.date, d]));
@@ -160,7 +161,7 @@ test('month grid: flags for today, past days, and days outside the month', () =>
   // Past days of the month still show their events (e.g. the event on Nov 10).
   assert.ok(byDate['2026-11-10'].events.some((e) => e.title === 'Already happened'));
   // Recurring weekly event appears every Saturday in the grid, including past ones.
-  assert.ok(['2026-11-07', '2026-11-14', '2026-11-21', '2026-11-28', '2026-12-05']
+  assert.ok(['2026-11-14', '2026-11-21', '2026-11-28', '2026-12-05']
     .every((d) => byDate[d].events.some((e) => e.title === 'Soccer practice')));
   // Compact time labels for month cells.
   const piano = byDate['2026-11-19'].events.find((e) => e.title.startsWith('Piano'));
@@ -188,13 +189,13 @@ test('resilience: failed fetch keeps last good data; URLs never leak', async (t)
   const svc = new CalendarService({ getConfig: () => cfg, cacheDir, rootDir: __dirname });
 
   await svc.refreshAll();
-  let payload = svc.getPayload('month', NOW);
+  let payload = svc.getPayload('4weeks', NOW);
   assert.ok(JSON.stringify(payload).includes('Haircut'));
 
   // Now the server fails (e.g. Google down / network out).
   fail = true;
   await svc.refreshAll();
-  payload = svc.getPayload('month', NOW);
+  payload = svc.getPayload('4weeks', NOW);
   assert.ok(JSON.stringify(payload).includes('Haircut'), 'still has last good data');
   assert.equal(payload.calendars[0].error, 'HTTP 500');
 
@@ -202,19 +203,19 @@ test('resilience: failed fetch keeps last good data; URLs never leak', async (t)
   server.removeAllListeners('request');
   server.on('request', (req, res) => { res.writeHead(200); res.end('<html>error</html>'); });
   await svc.refreshAll();
-  assert.ok(JSON.stringify(svc.getPayload('month', NOW)).includes('Haircut'));
+  assert.ok(JSON.stringify(svc.getPayload('4weeks', NOW)).includes('Haircut'));
 
   // After a restart, the disk snapshot restores the data before any fetch.
   const svc2 = new CalendarService({ getConfig: () => cfg, cacheDir, rootDir: __dirname });
   svc2.loadSnapshots();
-  assert.ok(JSON.stringify(svc2.getPayload('month', NOW)).includes('Haircut'));
+  assert.ok(JSON.stringify(svc2.getPayload('4weeks', NOW)).includes('Haircut'));
 
   // Stale flag: 31 minutes after last success.
   const later = new Date(Date.now() + 31 * 60 * 1000);
-  assert.equal(svc.getPayload('month', later).stale, true);
+  assert.equal(svc.getPayload('4weeks', later).stale, true);
 
   // The secret URL must never appear in the API payload.
-  assert.ok(!JSON.stringify(svc.getPayload('month', NOW)).includes('SECRET'));
+  assert.ok(!JSON.stringify(svc.getPayload('4weeks', NOW)).includes('SECRET'));
 });
 
 test('unreachable host is handled without throwing', async () => {
@@ -224,8 +225,8 @@ test('unreachable host is handled without throwing', async () => {
   };
   const svc = new CalendarService({ getConfig: () => cfg, cacheDir: fs.mkdtempSync(path.join(os.tmpdir(), 'fd-cal-')) });
   await svc.refreshAll();
-  const p = svc.getPayload('month', NOW);
-  assert.equal(p.days.length, 35); // still renders a full (empty) month grid
+  const p = svc.getPayload('4weeks', NOW);
+  assert.equal(p.days.length, 28); // still renders a full (empty) 4-week grid
   assert.equal(p.updatedAt, null);
   assert.equal(p.stale, true);
   assert.ok(p.calendars[0].error);

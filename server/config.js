@@ -23,13 +23,13 @@ const DEFAULTS = {
   // Relative paths are inside the project folder. Feature is off while the file doesn't exist.
   google: { serviceAccountFile: 'google-service-account.json' },
   display: {
-    theme: 'dark', fontScale: 1.0, calendarView: 'month',
+    theme: 'dark', fontScale: 1.0, calendarView: '4weeks',
     // Night dimming (off by default): a dark layer over the dashboard between these times.
     dimEnabled: false, dimStart: '23:00', dimEnd: '06:00', dimLevel: 0.6,
   },
 };
 
-const CALENDAR_VIEWS = ['month', '3weeks', 'week'];
+const CALENDAR_VIEWS = ['4weeks', '3weeks', 'week'];
 
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
@@ -56,7 +56,9 @@ function normalize(raw) {
   const scale = Number(cfg.display.fontScale);
   cfg.display.fontScale = Number.isFinite(scale) ? Math.min(Math.max(scale, 0.5), 2) : 1;
   if (!['dark', 'light'].includes(cfg.display.theme)) cfg.display.theme = 'dark';
-  if (!CALENDAR_VIEWS.includes(cfg.display.calendarView)) cfg.display.calendarView = 'month';
+  // "month" was the old calendar-month view; it's now the 4-week view.
+  if (cfg.display.calendarView === 'month') cfg.display.calendarView = '4weeks';
+  if (!CALENDAR_VIEWS.includes(cfg.display.calendarView)) cfg.display.calendarView = '4weeks';
   cfg.display.dimEnabled = cfg.display.dimEnabled === true;
   const HH_MM = /^([01]\d|2[0-3]):[0-5]\d$/;
   if (!HH_MM.test(cfg.display.dimStart)) cfg.display.dimStart = DEFAULTS.display.dimStart;

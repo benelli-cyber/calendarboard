@@ -104,9 +104,10 @@ answers, so the screen never lands on an error page.
 | `npm test`     | Run the calendar tests against the .ics fixtures |
 
 ## How the calendar works
-- **Views:** `display.calendarView` is `"month"` (full Sun–Sat weeks covering
-  the month), `"3weeks"` (this week plus the next two, with taller days), or
-  `"week"` (today + the next 6 days as 7 tall columns). Change it in
+- **Views:** `display.calendarView` is `"4weeks"` (this week plus the next
+  three: always 4 Sun–Sat rows, even across months), `"3weeks"` (this week
+  plus the next two, with taller days), or `"week"` (today + the next 6 days
+  as 7 tall columns). Change it in
   `config.json` or with the on-screen button.
 - The server fetches every enabled calendar every **5 minutes**
   (`server/calendar.js`). The dashboard polls `/api/calendar` every minute.

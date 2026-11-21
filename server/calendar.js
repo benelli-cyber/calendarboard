@@ -10,7 +10,7 @@
  *                      calendar in memory and on disk, never blanks the display.
  *
  * Views:
- *   "month" – full weeks (Sun–Sat) covering the current month: 4–6 rows of 7 days
+ *   "4weeks" – this week (Sun–Sat) plus the next three: always 4 rows of 7 days
  *   "3weeks" – this week (Sun–Sat) plus the next two: 3 rows of 7 days
  *   "week"  – rolling: today + the next 6 days
  *
@@ -29,7 +29,7 @@ const { startOfDay, dayKey, daysBetween } = require('./dates');
 const FETCH_TIMEOUT_MS = 20_000;
 const STALE_AFTER_MS = 30 * 60 * 1000; // show "last updated" hint after 30 min
 const WEEK_STARTS_ON = 0; // 0 = Sunday, 1 = Monday
-const VIEWS = ['month', '3weeks', 'week'];
+const VIEWS = ['4weeks', '3weeks', 'week'];
 
 // ---------------------------------------------------------------------------
 // Small date helpers (all in process-local time = config timezone)
@@ -47,7 +47,6 @@ function makeFormatters(timezone) {
   const time = fmt({ hour: 'numeric', minute: '2-digit' });
   const weekday = fmt({ weekday: 'long' });
   const monthDay = fmt({ month: 'short', day: 'numeric' });
-  const monthYear = fmt({ month: 'long', year: 'numeric' });
   // Intl puts a narrow no-break space before AM/PM; normalize to a plain space.
   const t = (d) => time.format(d).replace(NARROW_NBSP, ' ');
   return {
@@ -56,38 +55,31 @@ function makeFormatters(timezone) {
     shortTime: (d) => t(d).replace(':00', '').replace(' AM', 'a').replace(' PM', 'p'),
     weekday: (d) => weekday.format(d),
     monthDay: (d) => monthDay.format(d),
-    monthYear: (d) => monthYear.format(d),
   };
 }
 
 /**
  * The date range for a view.
+ *   "4weeks" – this week's Sunday + 28 days (always 4 rows, across month boundaries)
+ *   "3weeks" – this week's Sunday + 21 days
+ *   "week"   – today + 6 days (rolling)
  * @returns {{start: Date, dayCount: number, title: string}}
  */
 function viewRange(view, now, timezone) {
   const f = makeFormatters(timezone);
-  if (view === 'week') {
-    const start = startOfDay(now); // rolling week: today is always the first column
-    const end = startOfDay(start, 6);
-    const sameMonth = start.getMonth() === end.getMonth();
-    // "Nov 14 – 20, 2026" or "Nov 29 – Dec 5, 2026"
-    const title = `${f.monthDay(start)} – ${sameMonth ? end.getDate() : f.monthDay(end)}, ${end.getFullYear()}`;
-    return { start, dayCount: 7, title };
-  }
-  if (view === '3weeks') {
-    const start = startOfWeek(now); // this week's Sunday
-    const end = startOfDay(start, 20);
-    const sameMonth = start.getMonth() === end.getMonth();
-    // "Nov 8 – 28, 2026" or "Nov 22 – Dec 12, 2026"
-    const title = `${f.monthDay(start)} – ${sameMonth ? end.getDate() : f.monthDay(end)}, ${end.getFullYear()}`;
-    return { start, dayCount: 21, title };
-  }
-  // Month: from the start of the week containing the 1st to the end of the week containing the last day.
-  const first = new Date(now.getFullYear(), now.getMonth(), 1);
-  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  const start = startOfWeek(first);
-  const dayCount = daysBetween(start, startOfDay(startOfWeek(last), 7));
-  return { start, dayCount, title: f.monthYear(first) };
+  const span = (start, dayCount) => {
+    const end = startOfDay(start, dayCount - 1);
+    const sameYear = start.getFullYear() === end.getFullYear();
+    const sameMonth = sameYear && start.getMonth() === end.getMonth();
+    // "Nov 8 – 28, 2026", "Nov 15 – Dec 12, 2026", or "Dec 27, 2026 – Jan 23, 2027"
+    const title = sameYear
+      ? `${f.monthDay(start)} – ${sameMonth ? end.getDate() : f.monthDay(end)}, ${end.getFullYear()}`
+      : `${f.monthDay(start)}, ${start.getFullYear()} – ${f.monthDay(end)}, ${end.getFullYear()}`;
+    return { start, dayCount, title };
+  };
+  if (view === 'week') return span(startOfDay(now), 7); // today is always the first column
+  if (view === '3weeks') return span(startOfWeek(now), 21);
+  return span(startOfWeek(now), 28); // "4weeks"
 }
 
 // ---------------------------------------------------------------------------
@@ -423,7 +415,6 @@ class CalendarService {
       now,
       start: range.start,
       dayCount: range.dayCount,
-      focusMonthOf: view === 'month' ? now : null,
       timezone: cfg.timezone,
     });
 
@@ -437,8 +428,8 @@ class CalendarService {
   }
 
   /** The JSON payload for GET /api/calendar. Staleness is computed per request. */
-  getPayload(view = 'month', now = new Date()) {
-    if (!VIEWS.includes(view)) view = 'month';
+  getPayload(view = '4weeks', now = new Date()) {
+    if (!VIEWS.includes(view)) view = '4weeks';
     const data = this.getView(view, now);
     const isStale = (iso) => !iso || now - new Date(iso) > STALE_AFTER_MS;
     return {

@@ -95,7 +95,7 @@ function setup({ keyFile = writeKeyFile(), ...fake } = {}) {
   });
   /** color of the first event with this title on this date */
   const colorOf = (date, title) => {
-    const day = svc.getPayload('month', NOW).days.find((d) => d.date === date);
+    const day = svc.getPayload('4weeks', NOW).days.find((d) => d.date === date);
     return day.events.find((e) => e.title.startsWith(title))?.color;
   };
   return { svc, eventColors, fetchImpl, colorOf };
@@ -169,7 +169,7 @@ test('no key file: feature off, Google never contacted', async () => {
 test('status and calendar payload never contain the key or the iCal secret', async () => {
   const { svc, eventColors } = setup();
   await svc.refreshAll();
-  const out = JSON.stringify([eventColors.status(), svc.getPayload('month', NOW)]);
+  const out = JSON.stringify([eventColors.status(), svc.getPayload('4weeks', NOW)]);
   assert.ok(!out.includes('PRIVATE KEY'));
   assert.ok(!out.includes('tok-123'));
   assert.ok(!out.includes('SECRET123'));

@@ -52,9 +52,11 @@ test('night dimming defaults to off, bad values are fixed', () => {
   assert.deepEqual([bad.dimEnabled, bad.dimStart, bad.dimLevel], [false, '23:00', 0.9]);
 });
 
-test('normalize falls back to month for an unknown view', () => {
-  assert.equal(normalize({ display: { calendarView: 'year' } }).display.calendarView, 'month');
-  assert.equal(normalize({}).display.calendarView, 'month');
+test('normalize: unknown view → 4 weeks; old "month" setting → 4 weeks', () => {
+  assert.equal(normalize({ display: { calendarView: 'year' } }).display.calendarView, '4weeks');
+  assert.equal(normalize({}).display.calendarView, '4weeks');
+  assert.equal(normalize({ display: { calendarView: 'month' } }).display.calendarView, '4weeks');
+  assert.equal(normalize({ display: { calendarView: '3weeks' } }).display.calendarView, '3weeks');
 });
 
 test('publicConfig never includes calendar URLs', () => {

@@ -51,10 +51,10 @@ Family phones ──> http://<lxc-ip>:<port>/todo  (LAN now, Tailscale later)
 ### 2. Calendar
 - Sources: multiple Google Calendar **secret iCal URLs** from `config.json`, each with a display name and color
 - Fetch every **5 minutes** server-side; front end polls `/api/calendar`
-- **Month view** (default): full Sun–Sat weeks covering the current month (4–6 rows), today's cell highlighted, past days and days outside the month dimmed
-- **3-week view**: this week (Sun–Sat) plus the next two, 3 rows of 7 days with tall cells (same cell style as month)
+- **4-week view** (default, `"4weeks"`): this week (Sun–Sat) plus the next three, always 4 rows regardless of month boundaries (the user didn't want a 5-row calendar month); today highlighted, past days dimmed, the 1st of a month labelled ("Dec 1"). The old calendar-month view was removed; a saved `"month"` is read as `"4weeks"`
+- **3-week view** (`"3weeks"`): this week plus the next two, 3 rows with taller cells (same cell style)
 - **Week view**: rolling 7 days (today + next 6) as 7 tall columns with larger text; today is always the first column
-- Switch views via `display.calendarView` (`"month"` | `"3weeks"` | `"week"`) in config, or the small **Month | 3 Weeks | Week** button at the bottom-right of the dashboard. The button saves the choice on the server (`POST /api/display`), so clicking it from any phone/computer on the LAN also switches the Pi within ~15 s
+- Switch views via `display.calendarView` (`"4weeks"` | `"3weeks"` | `"week"`) in config, or the small **4 Weeks | 3 Weeks | Week** button at the bottom-right of the dashboard. The button saves the choice on the server (`POST /api/display`), so clicking it from any phone/computer on the LAN also switches the Pi within ~15 s
 - Days whose events don't fit in a cell show "+N more"
 - Correctly handle: recurring events, all-day events, multi-day events (show on each day spanned), cancelled instances, timezone conversion
 - Each event: its own Google color if set (optional service account), else its calendar's color. Timed events: time + title written in that color (DAKboard style); all-day events: solid colored bar
@@ -82,7 +82,7 @@ Family phones ──> http://<lxc-ip>:<port>/todo  (LAN now, Tailscale later)
 
 ### 5. Settings Page (`/settings`)
 - Simple form, phone/desktop friendly
-- Edit: calendar names/colors/enabled, calendar view (month/3 weeks/week), weather location, theme (dark/light), font scale
+- Edit: calendar names/colors/enabled, calendar view (4 weeks/3 weeks/week), weather location, theme (dark/light), font scale
 - Saves to `config.json` (secret iCal URLs can be added but are masked when displayed)
 - Dashboard applies changes on next poll without a manual reload (`/api/config` carries a `revision` hash; when it changes the dashboard re-fetches calendar + weather)
 - Weather location accepts coordinates pasted from Google Maps; the page shows live weather to confirm the location
@@ -91,9 +91,9 @@ Family phones ──> http://<lxc-ip>:<port>/todo  (LAN now, Tailscale later)
 Top to bottom:
 1. **Header:** compact clock (~120px) + date (left), current weather (right)
 2. **Weather alert banner** (only when an alert is active)
-3. **Calendar:** month grid (Sun–Sat rows), 3-week grid, or rolling 7-day week view. **Gets priority for space** (fills everything not used by the other sections)
+3. **Calendar:** 4-week grid (Sun–Sat rows), 3-week grid, or rolling 7-day week view. **Gets priority for space** (fills everything not used by the other sections)
 4. **Bottom row (~250px), side by side:** 5-day forecast (left, ~55%) | To-Do list (right, ~45%, sized for 2–4 items)
-- Small **Month | 3 Weeks | Week** toggle button in the bottom-right corner (inside the page margin)
+- Small **4 Weeks | 3 Weeks | Week** toggle button in the bottom-right corner (inside the page margin)
 
 - Default **dark theme** (better on a 24/7 display); optional light theme
 - Base font size large (e.g., clock ~120px; month-cell events ~18px with titles wrapping to 2 lines, week-column titles ~21px, at the user's request to match DAKboard); scale via config
@@ -118,7 +118,7 @@ Top to bottom:
   "display": {
     "theme": "dark",
     "fontScale": 1.0,
-    "calendarView": "month",
+    "calendarView": "4weeks",
     "dimStart": "23:00",
     "dimEnd": "06:00"
   }

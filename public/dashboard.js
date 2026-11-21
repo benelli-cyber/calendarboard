@@ -9,7 +9,7 @@
  */
 'use strict';
 
-const CONFIG_POLL_MS = 15 * 1000;   // also how fast the Pi follows the Month/Week button
+const CONFIG_POLL_MS = 15 * 1000;   // also how fast the Pi follows the view buttons
 const CALENDAR_POLL_MS = 60 * 1000; // server refreshes from Google every 5 min
 const WEATHER_POLL_MS = 2 * 60 * 1000; // server refreshes weather every 15 min, alerts every 5
 const TODO_POLL_MS = 20 * 1000;        // phone edits show up within ~20 s
@@ -20,7 +20,7 @@ const $ = (id) => document.getElementById(id);
 
 const state = {
   timezone: 'America/New_York',
-  view: 'month',          // 'month' | 'week'
+  view: '4weeks',         // '4weeks' | '3weeks' | 'week'
   configJson: '',
   configView: null,       // calendarView in the last config we applied
   viewClickedAt: 0,       // ignore stale config polls right after a button click
@@ -218,7 +218,7 @@ async function loadConfig() {
 }
 
 // ---------------------------------------------------------------------------
-// Month/week toggle
+// View buttons (4 Weeks | 3 Weeks | Week)
 // ---------------------------------------------------------------------------
 
 const toggleButtons = document.querySelectorAll('.view-toggle button');
@@ -295,7 +295,7 @@ function fitCell(list) {
   }
 }
 
-/** Weekday labels above the grid. Month view always starts on Sunday; the
+/** Weekday labels above the grid. The 4- and 3-week grids start on Sunday; the
  *  rolling week starts on today, so its labels come from the days themselves. */
 function renderWeekdayHeader(data) {
   const labels = data.view === 'week'
@@ -308,7 +308,7 @@ function renderWeekdayHeader(data) {
 
 function renderGrid(data) {
   const grid = $('cal-grid');
-  // The 3-week grid uses the same cell styles as the month grid.
+  // The 4- and 3-week grids share the compact cell styles (class view-month).
   grid.className = `cal-grid ${data.view === 'week' ? 'view-week' : 'view-month'}`;
   grid.style.gridTemplateRows = `repeat(${Math.ceil(data.days.length / 7)}, minmax(0, 1fr))`;
 

@@ -36,7 +36,7 @@
   "display": {
     "theme": "dark",
     "fontScale": 1,
-    "calendarView": "month"
+    "calendarView": "4weeks"
   },
   "weather": {
     "lat": 38.8894,
