@@ -21,7 +21,7 @@ CONFIG_PATH=config.demo.json npm start
 Open <http://localhost:8080/> and set the browser viewport to **1080×1920**
 (Chrome DevTools → device toolbar → "Responsive", 1080 × 1920).
 
-Use the small **Month | Week** button in the bottom-right corner to switch
+Use the small **4 Weeks | 3 Weeks | Week** button in the bottom-right corner to switch
 views. The choice is saved to the config file, so it also switches any other
 screen showing the dashboard (like the Pi) within ~15 seconds.
 
