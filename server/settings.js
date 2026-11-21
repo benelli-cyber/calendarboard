@@ -133,7 +133,7 @@ function applySettings(raw, input) {
       raw.display.fontScale = Math.round(checkNumber(d.fontScale, 0.5, 2, 'display.fontScale', 'Font size') * 100) / 100;
     }
     if (d.calendarView !== undefined) {
-      if (!CALENDAR_VIEWS.includes(d.calendarView)) throw new SettingsError('display.calendarView', 'View must be month or week');
+      if (!CALENDAR_VIEWS.includes(d.calendarView)) throw new SettingsError('display.calendarView', 'View must be month, 3weeks, or week');
       raw.display.calendarView = d.calendarView;
     }
     if (d.dimEnabled !== undefined) {

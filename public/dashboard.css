@@ -184,11 +184,11 @@ html, body {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  /* Use (almost) the full screen width: pull the panel out into the page
-     margins, leaving 6px at each edge. */
-  margin: 0 calc(-30px * var(--s));
-  padding: calc(16px * var(--s)) calc(4px * var(--s)) calc(6px * var(--s));
-  border-radius: 12px;
+  /* Use the full screen width: pull the panel out over the page margins
+     (edge to edge, like DAKboard). */
+  margin: 0 calc(-36px * var(--s));
+  padding: calc(16px * var(--s)) 0 0;
+  border-radius: 0;
 }
 
 .cal-header {
@@ -197,8 +197,8 @@ html, body {
   justify-content: space-between;
   align-items: baseline;
   gap: 20px;
-  /* 26px keeps the month title lined up with the clock above it */
-  padding: 0 calc(26px * var(--s)) calc(12px * var(--s));
+  /* 36px keeps the month title lined up with the clock above it */
+  padding: 0 calc(36px * var(--s)) calc(12px * var(--s));
 }
 
 .cal-title {
@@ -236,8 +236,7 @@ html, body {
   /* grid-template-rows is set by dashboard.js: one row per week */
   gap: 2px;
   background: var(--faint);
-  border: 2px solid var(--faint);
-  border-radius: 10px;
+  border-top: 2px solid var(--faint); /* no side borders: cells reach the screen edges */
   overflow: hidden;
 }
 

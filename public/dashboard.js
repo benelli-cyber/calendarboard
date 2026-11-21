@@ -268,7 +268,7 @@ function eventItem(ev) {
     // Timed events: time and title written in the event's color (like DAKboard).
     li.classList.add('timed');
     li.style.color = ev.color;
-    if (state.view === 'month') {
+    if (state.view !== 'week') { // month and 3-week grids: compact one-line time
       // The ' ' text node lets the line wrap between the time and the title.
       li.append(el('span', 'cev-time', ev.shortTime), ' ', el('span', 'cev-title', ev.title));
     } else {
@@ -308,7 +308,8 @@ function renderWeekdayHeader(data) {
 
 function renderGrid(data) {
   const grid = $('cal-grid');
-  grid.className = `cal-grid view-${data.view}`;
+  // The 3-week grid uses the same cell styles as the month grid.
+  grid.className = `cal-grid ${data.view === 'week' ? 'view-week' : 'view-month'}`;
   grid.style.gridTemplateRows = `repeat(${Math.ceil(data.days.length / 7)}, minmax(0, 1fr))`;
 
   const lists = [];

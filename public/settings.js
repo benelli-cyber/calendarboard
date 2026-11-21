@@ -129,7 +129,7 @@ function readCalendars() {
 
 function render(s) {
   $('calendars').replaceChildren(...s.calendars.map(calendarCard));
-  document.querySelector(`input[name=calendarView][value=${s.display.calendarView}]`).checked = true;
+  document.querySelector(`input[name=calendarView][value="${s.display.calendarView}"]`).checked = true;
   document.querySelector(`input[name=theme][value=${s.display.theme}]`).checked = true;
   $('fontScale').value = s.display.fontScale;
   showFontScale();

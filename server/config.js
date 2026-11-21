@@ -29,7 +29,7 @@ const DEFAULTS = {
   },
 };
 
-const CALENDAR_VIEWS = ['month', 'week'];
+const CALENDAR_VIEWS = ['month', '3weeks', 'week'];
 
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 

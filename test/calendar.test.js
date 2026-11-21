@@ -125,6 +125,29 @@ test('week view: rolling 7 days starting today', () => {
   assert.equal(cross.title, 'Nov 27 – Dec 3, 2026');
 });
 
+test('3-week view: this Sun–Sat week plus the next two', () => {
+  const r = viewRange('3weeks', NOW, TZ); // NOW is Sat Nov 14
+  assert.equal(r.start.toDateString(), 'Sun Nov 08 2026');
+  assert.equal(r.dayCount, 21);
+  assert.equal(r.title, 'Nov 8 – 28, 2026');
+  const cross = viewRange('3weeks', new Date('2026-11-27T12:00:00-05:00'), TZ);
+  assert.equal(cross.start.toDateString(), 'Sun Nov 22 2026');
+  assert.equal(cross.title, 'Nov 22 – Dec 12, 2026');
+  // Sunday is the first day of its own week
+  assert.equal(viewRange('3weeks', new Date('2026-11-15T08:00:00-05:00'), TZ).start.toDateString(), 'Sun Nov 15 2026');
+});
+
+test('3-week payload: 21 days, next month not dimmed, events placed', async () => {
+  const cfg = { timezone: TZ, calendars: [{ name: 'Fam', url: 'file:fixtures/recurring.ics', color: '#123456', enabled: true }] };
+  const svc = new CalendarService({ getConfig: () => cfg, cacheDir: fs.mkdtempSync(path.join(os.tmpdir(), 'fd-3w-')), rootDir: __dirname });
+  await svc.refreshAll();
+  const p = svc.getPayload('3weeks', new Date('2026-11-27T12:00:00-05:00'));
+  assert.equal(p.view, '3weeks');
+  assert.equal(p.days.length, 21);
+  assert.ok(p.days.every((d) => d.inMonth), 'December days are not dimmed in the 3-week view');
+  assert.ok(p.days.find((d) => d.date === '2026-12-05').events.some((e) => e.title === 'Soccer practice'));
+});
+
 test('month grid: flags for today, past days, and days outside the month', () => {
   const r = viewRange('month', NOW, TZ);
   const sources = ['recurring', 'allday-multiday'].map((n) => ({ name: n, color: '#fff', parsed: parseIcs(fixture(n)) }));
