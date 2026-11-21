@@ -262,15 +262,26 @@ WantedBy=default.target
 systemctl --user daemon-reload && systemctl --user disable --now dakboard.service && pkill -f /usr/lib/chromium/chromium; systemctl --user enable --now family-dashboard-kiosk.service
 ```
 
+**Also check for a DAKboard restart timer.** Some DAKboard setups add a timer
+that restarts DAKboard every few minutes, which brings it back even when its
+service is off. List timers with `systemctl --user list-timers --all`; if
+`dakboard-restart.timer` (or similar) shows up, turn it off:
+
+```bash
+systemctl --user disable --now dakboard-restart.timer
+```
+
 To go back to DAKboard, and to return to the dashboard (`pkill` closes the
 running Chromium window, which keeps running outside the service):
 
 ```bash
-systemctl --user disable --now family-dashboard-kiosk.service && pkill -f /usr/lib/chromium/chromium; systemctl --user enable --now dakboard.service
+systemctl --user disable --now family-dashboard-kiosk.service && pkill -f /usr/lib/chromium/chromium; systemctl --user enable --now dakboard.service dakboard-restart.timer
 ```
 ```bash
-systemctl --user disable --now dakboard.service && pkill -f /usr/lib/chromium/chromium; systemctl --user enable --now family-dashboard-kiosk.service
+systemctl --user disable --now dakboard.service dakboard-restart.timer && pkill -f /usr/lib/chromium/chromium; systemctl --user enable --now family-dashboard-kiosk.service
 ```
+
+(Leave out `dakboard-restart.timer` if your Pi doesn't have one.)
 
 Whichever one you switch to last is the one that starts after a reboot.
 
