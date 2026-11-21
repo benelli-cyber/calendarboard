@@ -45,6 +45,12 @@ test('updateConfig keeps the file private (chmod 600 survives a save)', () => {
   assert.equal(fs.statSync(process.env.CONFIG_PATH).mode & 0o777, 0o600);
 });
 
+test('current temperature defaults to the forecast for the exact location', () => {
+  assert.equal(normalize({}).weather.currentSource, 'forecast');
+  assert.equal(normalize({ weather: { currentSource: 'station' } }).weather.currentSource, 'station');
+  assert.equal(normalize({ weather: { currentSource: 'x' } }).weather.currentSource, 'forecast');
+});
+
 test('night dimming defaults to off, bad values are fixed', () => {
   const d = normalize({}).display;
   assert.deepEqual([d.dimEnabled, d.dimStart, d.dimEnd, d.dimLevel], [false, '23:00', '06:00', 0.6]);

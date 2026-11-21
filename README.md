@@ -159,9 +159,12 @@ Open `http://<lxc-ip>:8080/settings` on a phone or computer on the home network.
 
 ## How the weather works
 - **Primary:** National Weather Service (`api.weather.gov`) for your exact
-  lat/lon (US only). Current conditions come from the nearest weather
-  station's latest observation. If that is missing or more than 2 hours old,
-  the current hour's forecast is used instead.
+  lat/lon (US only). The **current temperature** comes from NWS's hourly
+  forecast for your exact location (feels-like from NWS's wind chill / heat
+  index formulas). The nearest NWS *station* can be miles away; e.g. an
+  airport that runs several degrees colder on clear mornings. You can switch
+  to the station on the settings page ("Current temperature from"); then a
+  missing or 2+ hour-old reading falls back to the forecast.
 - **Fallback:** if NWS fails or takes longer than 10 seconds, Open-Meteo is
   used (no API key). The forecast panel then shows a small "via Open-Meteo".
 - Refreshes every **15 minutes**. **Alerts** (watches, warnings, advisories)

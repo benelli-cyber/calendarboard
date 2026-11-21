@@ -120,6 +120,9 @@ test('display and weather settings', () => {
   assert.throws(() => applySettings(baseRaw(), { weather: { lat: 95 } }), { field: 'weather.lat' });
   assert.throws(() => applySettings(baseRaw(), { weather: { lon: 'abc' } }), { field: 'weather.lon' });
   assert.throws(() => applySettings(baseRaw(), { weather: { userAgent: ' ' } }), { field: 'weather.userAgent' });
+  applySettings(raw, { weather: { currentSource: 'station' } });
+  assert.equal(raw.weather.currentSource, 'station');
+  assert.throws(() => applySettings(baseRaw(), { weather: { currentSource: 'guess' } }), { field: 'weather.currentSource' });
 });
 
 // ---------------------------------------------------------------------------

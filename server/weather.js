@@ -111,6 +111,23 @@ const minOf = (nums) => {
   return v.length ? Math.min(...v) : null;
 };
 
+/**
+ * "Feels like" in °F from temperature, wind (mph), and humidity (%), using the
+ * NWS wind chill formula (≤ 50 °F, wind ≥ 3 mph) and heat index (≥ 80 °F).
+ */
+function feelsLikeF(t, mph, rh) {
+  if (typeof t !== 'number') return null;
+  if (t <= 50 && mph >= 3) {
+    const v = mph ** 0.16;
+    return 35.74 + 0.6215 * t - 35.75 * v + 0.4275 * t * v;
+  }
+  if (t >= 80 && typeof rh === 'number') {
+    return -42.379 + 2.04901523 * t + 10.14333127 * rh - 0.22475541 * t * rh - 0.00683783 * t * t
+      - 0.05481717 * rh * rh + 0.00122874 * t * t * rh + 0.00085282 * t * rh * rh - 0.00000199 * t * t * rh * rh;
+  }
+  return t;
+}
+
 function weekdayShort(date, timezone) {
   return new Intl.DateTimeFormat('en-US', { timeZone: timezone, weekday: 'short' }).format(date);
 }
@@ -121,9 +138,9 @@ function weekdayShort(date, timezone) {
 
 /**
  * @param {{forecast:object, hourly?:object, observation?:object}} raw  NWS JSON responses
- * @param {{now?:Date, timezone:string}} opts
+ * @param {{now?:Date, timezone:string, currentSource?:'forecast'|'station'}} opts
  */
-function normalizeNws({ forecast, hourly, observation }, { now = new Date(), timezone }) {
+function normalizeNws({ forecast, hourly, observation }, { now = new Date(), timezone, currentSource = 'forecast' }) {
   const periods = forecast?.properties?.periods || [];
   if (!periods.length) throw new Error('NWS forecast had no periods');
   const hours = (hourly?.properties?.periods || []).filter((h) => new Date(h.endTime || h.startTime) > now);
@@ -137,40 +154,50 @@ function normalizeNws({ forecast, hourly, observation }, { now = new Date(), tim
   }
   const pop = (p) => qv(p?.probabilityOfPrecipitation);
 
-  // --- Current conditions: a recent station observation, else the current hourly forecast.
+  // --- Current conditions. Two possible sources (config weather.currentSource):
+  //   "forecast" (default): NWS's hourly forecast for your exact location.
+  //   "station": the nearest NWS station's latest reading. A real thermometer,
+  //      but it can be miles away; e.g. an airport that gets much colder on
+  //      clear nights than a yard in town. Used only if under 2 hours old.
+  // Whichever is chosen, the other is the fallback.
   const obs = observation?.properties;
   const obsTempC = qv(obs?.temperature);
   const obsFresh = obs && obsTempC != null && now - new Date(obs.timestamp) < MAX_OBSERVATION_AGE_MS;
   const hourNow = hours[0];
-  let current;
-  if (obsFresh) {
-    const feelsC = qv(obs.heatIndex) ?? qv(obs.windChill) ?? obsTempC;
-    current = {
-      temp: round(cToF(obsTempC)),
-      feelsLike: round(cToF(feelsC)),
-      condition: obs.textDescription || hourNow?.shortForecast || '',
-      icon: obs.icon ? iconFromNws(obs.icon) : iconFromNws(hourNow?.icon),
-      windMph: round(kmhToMph(qv(obs.windSpeed))),
-      humidity: round(qv(obs.relativeHumidity)),
-      observedAt: obs.timestamp,
-    };
-  } else if (hourNow) {
-    current = {
+
+  const fromStation = obsFresh ? {
+    temp: round(cToF(obsTempC)),
+    feelsLike: round(cToF(qv(obs.heatIndex) ?? qv(obs.windChill) ?? obsTempC)),
+    condition: obs.textDescription || hourNow?.shortForecast || '',
+    icon: obs.icon ? iconFromNws(obs.icon) : iconFromNws(hourNow?.icon),
+    windMph: round(kmhToMph(qv(obs.windSpeed))),
+    humidity: round(qv(obs.relativeHumidity)),
+    observedAt: obs.timestamp,
+  } : null;
+
+  const fromForecast = hourNow ? (() => {
+    const wind = parseFloat(hourNow.windSpeed);
+    const humidity = qv(hourNow.relativeHumidity);
+    return {
       temp: round(hourNow.temperature),
-      feelsLike: round(hourNow.temperature),
+      feelsLike: round(feelsLikeF(hourNow.temperature, wind, humidity)),
       condition: hourNow.shortForecast || '',
       icon: iconFromNws(hourNow.icon),
-      windMph: round(parseFloat(hourNow.windSpeed)),
-      humidity: round(qv(hourNow.relativeHumidity)),
+      windMph: round(wind),
+      humidity: round(humidity),
       observedAt: null, // forecast, not an observation
     };
-  } else {
-    const p = periods[0];
-    current = {
-      temp: round(p.temperature), feelsLike: round(p.temperature), condition: p.shortForecast || '',
-      icon: iconFromNws(p.icon), windMph: round(parseFloat(p.windSpeed)), humidity: null, observedAt: null,
-    };
-  }
+  })() : null;
+
+  const p0 = periods[0];
+  const fromPeriod = {
+    temp: round(p0.temperature), feelsLike: round(p0.temperature), condition: p0.shortForecast || '',
+    icon: iconFromNws(p0.icon), windMph: round(parseFloat(p0.windSpeed)), humidity: null, observedAt: null,
+  };
+
+  const current = currentSource === 'station'
+    ? fromStation || fromForecast || fromPeriod
+    : fromForecast || fromStation || fromPeriod;
 
   // --- Today: the daytime period's high and tonight's low. Late in the day the
   // daytime period is gone, so fall back to the hourly temps for the rest of today.
@@ -208,7 +235,9 @@ function normalizeNws({ forecast, hourly, observation }, { now = new Date(), tim
     icon: iconFromNws(h.icon),
   }));
 
-  return { source: 'nws', current, today: todayInfo, daily, hourly: hourlyOut };
+  // The station's reading is always returned too (scripts/compare-weather.js logs it).
+  const stationReading = fromStation ? { temp: fromStation.temp, observedAt: fromStation.observedAt } : null;
+  return { source: 'nws', current, stationReading, today: todayInfo, daily, hourly: hourlyOut };
 }
 
 /**
@@ -354,16 +383,19 @@ class WeatherService {
   /** Look up the forecast URLs and nearby stations for our lat/lon (cached until the location changes). */
   async resolvePoints() {
     const key = this.locationKey();
-    if (this.points?.locationKey === key) return this.points;
+    // Reuse the saved lookup, unless it's from before station names were stored.
+    if (this.points?.locationKey === key && 'stationName' in this.points) return this.points;
     const p = (await this.getJson(`${NWS_BASE}/points/${key}`, { nws: true })).properties;
     let stations = [];
+    let stationName = null;
     try {
       const st = await this.getJson(`${p.observationStations}?limit=5`, { nws: true });
       stations = (st.features || []).map((f) => f.properties.stationIdentifier).filter(Boolean);
+      stationName = st.features?.[0]?.properties?.name || null;
     } catch (err) {
       console.warn(`[weather] Could not list NWS stations: ${err.message}`);
     }
-    this.points = { locationKey: key, forecast: p.forecast, forecastHourly: p.forecastHourly, stations };
+    this.points = { locationKey: key, forecast: p.forecast, forecastHourly: p.forecastHourly, stations, stationName };
     this.writeSnapshot('weather-points.json', this.points);
     return this.points;
   }
@@ -390,7 +422,8 @@ class WeatherService {
         this.getJson(pts.forecastHourly, { nws: true }).catch(() => null),
         this.fetchObservation(pts.stations, now),
       ]);
-      return normalizeNws({ forecast, hourly, observation }, { now, timezone: this.getConfig().timezone });
+      const { timezone, weather } = this.getConfig();
+      return normalizeNws({ forecast, hourly, observation }, { now, timezone, currentSource: weather.currentSource });
     } catch (err) {
       this.points = null; // grid may have changed; look it up again next time
       throw err;
@@ -433,7 +466,7 @@ class WeatherService {
         return;
       }
     }
-    this.weather = { locationKey: key, data, updatedAt: now };
+    this.weather = { locationKey: key, currentSource: this.getConfig().weather.currentSource, data, updatedAt: now };
     this.weatherError = null;
     this.writeSnapshot('weather.json', this.weather);
   }
@@ -476,6 +509,8 @@ class WeatherService {
     } else if (this.weather?.locationKey !== key || this.alerts?.locationKey !== key) {
       this.refreshWeather();
       this.refreshAlerts();
+    } else if (this.weather?.currentSource !== this.getConfig().weather.currentSource) {
+      this.refreshWeather(); // switched between forecast and station
     }
   }
 
@@ -490,6 +525,10 @@ class WeatherService {
     return {
       configured: true,
       source: w?.data.source || null,
+      // Nearest NWS station (shown on the settings page next to the "station" option)
+      station: this.points?.locationKey === key && this.points.stations?.[0]
+        ? { id: this.points.stations[0], name: this.points.stationName || null }
+        : null,
       updatedAt: w ? w.updatedAt.toISOString() : null,
       stale: !w || now - w.updatedAt > STALE_AFTER_MS,
       error: this.weatherError ? 'Weather services unavailable' : null,
@@ -503,5 +542,5 @@ class WeatherService {
 }
 
 module.exports = {
-  normalizeNws, normalizeOpenMeteo, parseAlerts, iconFromNws, wmoInfo, WeatherService, STALE_AFTER_MS,
+  normalizeNws, normalizeOpenMeteo, parseAlerts, iconFromNws, wmoInfo, feelsLikeF, WeatherService, STALE_AFTER_MS,
 };

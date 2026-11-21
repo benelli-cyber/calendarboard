@@ -38,9 +38,9 @@ async function collectRow(weather, now = new Date()) {
 
   try {
     const nws = await weather.fetchNws(now);
-    if (nws.current.observedAt) {
-      row.nws_station_f = nws.current.temp;
-      row.nws_station_observed = localStamp(new Date(nws.current.observedAt));
+    if (nws.stationReading) {
+      row.nws_station_f = nws.stationReading.temp;
+      row.nws_station_observed = localStamp(new Date(nws.stationReading.observedAt));
     } else {
       notes.push('no recent NWS station reading');
     }

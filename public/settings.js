@@ -140,6 +140,7 @@ function render(s) {
   showDim();
   $('coords').value = formatCoords(s.weather.lat, s.weather.lon);
   $('userAgent').value = s.weather.userAgent || '';
+  document.querySelector(`input[name=currentSource][value="${s.weather.currentSource || 'forecast'}"]`).checked = true;
 }
 
 function showFontScale() {
@@ -189,6 +190,10 @@ async function showWeatherStatus() {
   const box = $('weather-status');
   try {
     const w = await (await fetch('/api/weather', { cache: 'no-store' })).json();
+    // Name the station in the "nearest weather station" option, e.g. "(Montgomery, Orange County Airport)".
+    if (w.station) {
+      $('station-label').textContent = `Nearest weather station (${w.station.name || w.station.id})`;
+    }
     if (!w.configured) box.textContent = 'Weather is off until a location is set.';
     else if (!w.current) box.textContent = 'Checking the weather for this location…';
     else {
@@ -246,7 +251,11 @@ async function save(event) {
       dimEnd: $('dimEnd').value,
       dimLevel: Number($('dimLevel').value),
     },
-    weather: { ...coords, userAgent: $('userAgent').value },
+    weather: {
+      ...coords,
+      userAgent: $('userAgent').value,
+      currentSource: document.querySelector('input[name=currentSource]:checked').value,
+    },
   };
 
   const button = $('save');

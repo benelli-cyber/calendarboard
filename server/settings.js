@@ -59,6 +59,7 @@ function toSettings(cfg) {
       lat: cfg.weather.lat,
       lon: cfg.weather.lon,
       userAgent: cfg.weather.userAgent,
+      currentSource: cfg.weather.currentSource,
     },
   };
 }
@@ -157,6 +158,12 @@ function applySettings(raw, input) {
     raw.weather = { ...(raw.weather || {}) };
     if (w.lat !== undefined) raw.weather.lat = checkNumber(w.lat, -90, 90, 'weather.lat', 'Latitude');
     if (w.lon !== undefined) raw.weather.lon = checkNumber(w.lon, -180, 180, 'weather.lon', 'Longitude');
+    if (w.currentSource !== undefined) {
+      if (!['forecast', 'station'].includes(w.currentSource)) {
+        throw new SettingsError('weather.currentSource', 'Choose forecast or station');
+      }
+      raw.weather.currentSource = w.currentSource;
+    }
     if (w.userAgent !== undefined) {
       const ua = typeof w.userAgent === 'string' ? w.userAgent.trim() : '';
       if (!ua || ua.length > 200) throw new SettingsError('weather.userAgent', 'Enter an app name and contact, e.g. family-dashboard (you@example.com)');

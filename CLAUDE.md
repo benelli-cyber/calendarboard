@@ -63,7 +63,7 @@ Family phones ──> http://<lxc-ip>:<port>/todo  (LAN now, Tailscale later)
 ### 3. Weather
 - **Primary:** National Weather Service API (`api.weather.gov`) using exact lat/lon from config
   - Resolve `/points/{lat},{lon}` once, cache the gridpoint/forecast URLs
-  - Current conditions from the nearest observation station
+  - Current temperature: by default from NWS's **hourly forecast for the exact location** (`weather.currentSource: "forecast"`); optional `"station"` uses the nearest observation station. The user's nearest station (an airport ~8 mi away) read 7 °F colder than their own weather station on a morning when the exact-location forecast matched it
   - Hourly + 7-day forecast
   - **Active alerts** for the location (`/alerts/active?point=lat,lon`). Display prominently in a colored banner when present.
   - Must send a descriptive `User-Agent` header (from config)

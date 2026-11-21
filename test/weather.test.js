@@ -8,7 +8,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const {
-  normalizeNws, normalizeOpenMeteo, parseAlerts, iconFromNws, wmoInfo, WeatherService,
+  normalizeNws, normalizeOpenMeteo, parseAlerts, iconFromNws, wmoInfo, feelsLikeF, WeatherService,
 } = require('../server/weather');
 
 const TZ = 'America/New_York';
@@ -34,10 +34,10 @@ test('WMO codes map to icons and text', () => {
   assert.deepEqual(wmoInfo(96), ['thunder', 'Thunderstorms']);
 });
 
-test('NWS: current conditions come from the station observation (°C → °F)', () => {
+test('NWS "station" setting: current conditions from the station observation (°C → °F)', () => {
   const w = normalizeNws(
     { forecast: fx('nws-forecast'), hourly: fx('nws-hourly'), observation: fx('nws-observation') },
-    { now: NOW, timezone: TZ },
+    { now: NOW, timezone: TZ, currentSource: 'station' },
   );
   assert.equal(w.source, 'nws');
   assert.equal(w.current.temp, 48);      // 9 °C
@@ -47,6 +47,26 @@ test('NWS: current conditions come from the station observation (°C → °F)', 
   assert.equal(w.current.windMph, 14);   // 22.2 km/h
   assert.equal(w.current.humidity, 50);
   assert.ok(w.current.observedAt);
+});
+
+test('NWS default: current conditions from the forecast for the exact location', () => {
+  const w = normalizeNws(
+    { forecast: fx('nws-forecast'), hourly: fx('nws-hourly'), observation: fx('nws-observation') },
+    { now: NOW, timezone: TZ },
+  );
+  assert.equal(w.current.temp, 50);       // hourly forecast for 4–5 PM
+  assert.equal(w.current.feelsLike, 45);  // NWS wind chill at 50 °F, 14 mph
+  assert.equal(w.current.windMph, 14);
+  assert.equal(w.current.observedAt, null);
+  // The station reading is still reported separately (for the comparison script).
+  assert.equal(w.stationReading.temp, 48);
+});
+
+test('feels-like: NWS wind chill and heat index', () => {
+  assert.equal(Math.round(feelsLikeF(30, 10)), 21);      // NWS wind chill chart: 30 °F, 10 mph → 21
+  assert.equal(Math.round(feelsLikeF(50, 2)), 50);       // too little wind: no wind chill
+  assert.equal(Math.round(feelsLikeF(65, 20)), 65);      // mild: unchanged
+  assert.equal(Math.round(feelsLikeF(90, 5, 60)), 100);  // NWS heat index chart: 90 °F, 60% → 100
 });
 
 test('NWS: today high/low and the next 5 days', () => {
@@ -135,8 +155,8 @@ function fakeFetch(behavior) {
   return fn;
 }
 
-function makeService(fetchImpl, lat = 38.8894, lon = -77.0352) {
-  const cfg = { timezone: TZ, weather: { lat, lon, userAgent: 'test-agent (test)' } };
+function makeService(fetchImpl, lat = 38.8894, lon = -77.0352, currentSource = 'station') {
+  const cfg = { timezone: TZ, weather: { lat, lon, userAgent: 'test-agent (test)', currentSource } };
   const cacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fd-wx-'));
   return { svc: new WeatherService({ getConfig: () => cfg, cacheDir, fetchImpl }), cfg, cacheDir };
 }
@@ -155,6 +175,36 @@ test('service: NWS success, sends User-Agent, caches the /points lookup', async 
 
   await svc.refreshWeather(NOW);
   assert.equal(f.calls.filter((c) => c.url.includes('/points/')).length, 1, '/points resolved only once');
+});
+
+test('service: forecast setting is used, and the nearest station is named', async () => {
+  const { svc } = makeService(fakeFetch({}), 38.8894, -77.0352, 'forecast');
+  await svc.refreshWeather(NOW);
+  const p = svc.getPayload(NOW);
+  assert.equal(p.current.temp, 50);
+  assert.deepEqual(p.station, { id: 'KDCA', name: fx('nws-stations').features[0].properties.name });
+});
+
+test('service: switching forecast ↔ station on the settings page refetches', async () => {
+  const f = fakeFetch({});
+  const { svc, cfg } = makeService(f, 38.8894, -77.0352, 'forecast');
+  await svc.refreshWeather(NOW);
+  svc.timers = [1]; // pretend the refresh timers are running
+  cfg.weather.currentSource = 'station';
+  const before = f.calls.length;
+  svc.onConfigChange();
+  await new Promise((r) => setTimeout(r, 50));
+  assert.ok(f.calls.length > before, 'weather fetched again');
+  assert.equal(svc.weather.currentSource, 'station');
+});
+
+test('service: a saved lookup without a station name is refreshed once', async () => {
+  const f = fakeFetch({});
+  const { svc } = makeService(f);
+  svc.points = { locationKey: svc.locationKey(), forecast: 'x', forecastHourly: 'y', stations: ['KDCA'] }; // old snapshot
+  await svc.refreshWeather(NOW);
+  assert.equal(f.calls.filter((c) => c.url.includes('/points/')).length, 1);
+  assert.ok(svc.getPayload(NOW).station.name);
 });
 
 test('service: NWS down → Open-Meteo fallback', async () => {

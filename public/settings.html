@@ -93,6 +93,7 @@
       border: 2px solid var(--faint);
       border-radius: 10px;
       padding: 11px 8px;
+      overflow-wrap: anywhere; /* long station names */
     }
     .choices input { position: absolute; opacity: 0; pointer-events: none; }
     .choices label:has(input:checked) { border-color: var(--accent); background: #10232e; }
@@ -224,6 +225,13 @@
         <span>Location (latitude, longitude)</span>
         <input id="coords" inputmode="decimal" placeholder="38.8894, -77.0352" autocomplete="off" data-field="weather.coords">
       </label>
+      <div class="field">
+        <span>Current temperature from</span>
+        <div class="choices">
+          <label><input type="radio" name="currentSource" value="forecast">Forecast for your exact location (recommended)</label>
+          <label><input type="radio" name="currentSource" value="station"><span id="station-label">Nearest weather station</span></label>
+        </div>
+      </div>
       <label class="field">
         <span>Contact for weather.gov (they ask apps to include an email)</span>
         <input id="userAgent" placeholder="family-dashboard (you@example.com)" autocomplete="off" data-field="weather.userAgent">

@@ -18,7 +18,9 @@ const DEFAULTS = {
   host: '0.0.0.0',
   timezone: 'America/New_York',
   calendars: [],
-  weather: { lat: 0, lon: 0, userAgent: 'family-dashboard', units: 'imperial' },
+  // currentSource: 'forecast' = NWS forecast for your exact spot (default),
+  //                'station'  = nearest NWS weather station's reading
+  weather: { lat: 0, lon: 0, userAgent: 'family-dashboard', units: 'imperial', currentSource: 'forecast' },
   // Optional per-event Google colors: a service account key file (deploy/GOOGLE-COLORS.md).
   // Relative paths are inside the project folder. Feature is off while the file doesn't exist.
   google: { serviceAccountFile: 'google-service-account.json' },
@@ -59,6 +61,7 @@ function normalize(raw) {
   // "month" was the old calendar-month view; it's now the 4-week view.
   if (cfg.display.calendarView === 'month') cfg.display.calendarView = '4weeks';
   if (!CALENDAR_VIEWS.includes(cfg.display.calendarView)) cfg.display.calendarView = '4weeks';
+  if (!['forecast', 'station'].includes(cfg.weather.currentSource)) cfg.weather.currentSource = 'forecast';
   cfg.display.dimEnabled = cfg.display.dimEnabled === true;
   const HH_MM = /^([01]\d|2[0-3]):[0-5]\d$/;
   if (!HH_MM.test(cfg.display.dimStart)) cfg.display.dimStart = DEFAULTS.display.dimStart;
