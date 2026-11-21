@@ -133,6 +133,9 @@ function render(s) {
   document.querySelector(`input[name=theme][value=${s.display.theme}]`).checked = true;
   $('fontScale').value = s.display.fontScale;
   showFontScale();
+  $('allDaySame').checked = Boolean(s.display.allDayColor);
+  $('allDayColor').value = s.display.allDayColor || '#f4511e';
+  $('allDayColor').disabled = !s.display.allDayColor;
   $('dimEnabled').checked = s.display.dimEnabled;
   $('dimStart').value = s.display.dimStart;
   $('dimEnd').value = s.display.dimEnd;
@@ -246,6 +249,7 @@ async function save(event) {
       calendarView: document.querySelector('input[name=calendarView]:checked').value,
       theme: document.querySelector('input[name=theme]:checked').value,
       fontScale: Number($('fontScale').value),
+      allDayColor: $('allDaySame').checked ? $('allDayColor').value : '',
       dimEnabled: $('dimEnabled').checked,
       dimStart: $('dimStart').value,
       dimEnd: $('dimEnd').value,
@@ -302,6 +306,7 @@ $('add-calendar').addEventListener('click', () => {
 });
 $('fontScale').addEventListener('input', showFontScale);
 $('dimEnabled').addEventListener('change', showDim);
+$('allDaySame').addEventListener('change', () => { $('allDayColor').disabled = !$('allDaySame').checked; });
 $('dimLevel').addEventListener('input', showDim);
 $('settings-form').addEventListener('submit', save);
 document.addEventListener('input', () => { if ($('message').className === 'ok') setMessage(''); });

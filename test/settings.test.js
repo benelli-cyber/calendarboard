@@ -115,6 +115,12 @@ test('display and weather settings', () => {
   assert.throws(() => applySettings(baseRaw(), { display: { dimLevel: 1 } }), { field: 'display.dimLevel' });
   assert.throws(() => applySettings(baseRaw(), { display: { dimEnabled: 'yes' } }), { field: 'display.dimEnabled' });
 
+  applySettings(raw, { display: { allDayColor: '#ff9800' } });
+  assert.equal(raw.display.allDayColor, '#FF9800');
+  applySettings(raw, { display: { allDayColor: '' } });
+  assert.equal(raw.display.allDayColor, '');
+  assert.throws(() => applySettings(baseRaw(), { display: { allDayColor: 'red' } }), { field: 'display.allDayColor' });
+
   assert.throws(() => applySettings(baseRaw(), { display: { theme: 'neon' } }), { field: 'display.theme' });
   assert.throws(() => applySettings(baseRaw(), { display: { fontScale: 5 } }), { field: 'display.fontScale' });
   assert.throws(() => applySettings(baseRaw(), { weather: { lat: 95 } }), { field: 'weather.lat' });

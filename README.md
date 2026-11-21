@@ -115,7 +115,10 @@ answers, so the screen never lands on an error page.
   EXDATE, moved instances (RECURRENCE-ID), and DST. Cancelled events and
   instances are removed.
 - Multi-day events appear on every day they cover. All-day events are solid
-  colored bars; timed events that cross midnight show "→6:30a" on the next day.
+  orange bars (one shared color so they stand out; change it, or switch back
+  to calendar colors, under Settings → Display → All-day events). Timed events
+  are written in their calendar's color; ones that cross midnight show
+  "→6:30a" on the next day.
 - **Resilience:** if a fetch fails, or returns something that isn't a calendar,
   the last good copy is kept. Snapshots are saved in `data/calendar-cache/`,
   so a restart shows data right away. A calendar that hasn't updated in

@@ -207,10 +207,12 @@ function buildDays(sources, { now = new Date(), start, dayCount = 7, focusMonthO
           allDayToday = true;
         }
 
+        const ownColor = src.eventColor ? src.eventColor(ev) : null;
         day.info.events.push({
           title: ev.title,
           calendar: src.name,
-          color: (src.eventColor && src.eventColor(ev)) || src.color,
+          color: ownColor || src.color,
+          ownColor: Boolean(ownColor), // true = the event's own Google color (wins over the all-day color)
           allDay: allDayToday,
           time,
           shortTime,

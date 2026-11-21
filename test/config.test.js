@@ -51,6 +51,12 @@ test('current temperature defaults to the forecast for the exact location', () =
   assert.equal(normalize({ weather: { currentSource: 'x' } }).weather.currentSource, 'forecast');
 });
 
+test('all-day color: Tangerine by default, "" means calendar colors, bad values fixed', () => {
+  assert.equal(normalize({}).display.allDayColor, '#F4511E');
+  assert.equal(normalize({ display: { allDayColor: '' } }).display.allDayColor, '');
+  assert.equal(normalize({ display: { allDayColor: 'orange' } }).display.allDayColor, '#F4511E');
+});
+
 test('night dimming defaults to off, bad values are fixed', () => {
   const d = normalize({}).display;
   assert.deepEqual([d.dimEnabled, d.dimStart, d.dimEnd, d.dimLevel], [false, '23:00', '06:00', 0.6]);

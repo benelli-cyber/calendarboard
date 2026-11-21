@@ -57,7 +57,7 @@ Family phones ──> http://<lxc-ip>:<port>/todo  (LAN now, Tailscale later)
 - Switch views via `display.calendarView` (`"4weeks"` | `"3weeks"` | `"week"`) in config, or the small **4 Weeks | 3 Weeks | Week** button at the bottom-right of the dashboard. The button saves the choice on the server (`POST /api/display`), so clicking it from any phone/computer on the LAN also switches the Pi within ~15 s
 - Days whose events don't fit in a cell show "+N more"
 - Correctly handle: recurring events, all-day events, multi-day events (show on each day spanned), cancelled instances, timezone conversion
-- Each event: its own Google color if set (optional service account), else its calendar's color. Timed events: time + title written in that color (DAKboard style); all-day events: solid colored bar
+- Each event: its own Google color if set (optional service account), else its calendar's color. Timed events: time + title written in that color (DAKboard style). All-day events: solid bar in **one shared color** so they stand out (`display.allDayColor`, default Google "Tangerine" `#F4511E`, white text; `""` = calendar colors); an event's own Google color still wins
 - **Resilience:** if a fetch fails, keep serving the last good data. Never show a blank calendar. Show a small, subtle "last updated" indicator if data is stale (>30 min).
 
 ### 3. Weather

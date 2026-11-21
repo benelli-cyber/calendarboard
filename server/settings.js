@@ -54,6 +54,7 @@ function toSettings(cfg) {
       dimStart: cfg.display.dimStart,
       dimEnd: cfg.display.dimEnd,
       dimLevel: cfg.display.dimLevel,
+      allDayColor: cfg.display.allDayColor,
     },
     weather: {
       lat: cfg.weather.lat,
@@ -136,6 +137,12 @@ function applySettings(raw, input) {
     if (d.calendarView !== undefined) {
       if (!CALENDAR_VIEWS.includes(d.calendarView)) throw new SettingsError('display.calendarView', 'View must be 4weeks, 3weeks, or week');
       raw.display.calendarView = d.calendarView;
+    }
+    if (d.allDayColor !== undefined) {
+      if (d.allDayColor !== '' && !HEX_COLOR.test(d.allDayColor)) {
+        throw new SettingsError('display.allDayColor', 'Pick a color for all-day events');
+      }
+      raw.display.allDayColor = d.allDayColor && d.allDayColor.toUpperCase();
     }
     if (d.dimEnabled !== undefined) {
       if (typeof d.dimEnabled !== 'boolean') throw new SettingsError('display.dimEnabled', 'Night dimming must be on or off');

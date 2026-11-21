@@ -121,6 +121,11 @@ test('events get their own Google colors; others keep the calendar color', async
   assert.equal(colorOf('2026-11-21', 'Soccer'), CAL_COLOR, 'next Saturday: no color in Google');
   assert.equal(colorOf('2026-11-19', 'Piano lesson (moved)'), EVENT_COLORS[7], 'moved occurrence: Peacock');
   assert.equal(colorOf('2026-11-18', "Grandma's"), EVENT_COLORS[5], 'all-day: Banana');
+  // Events with their own Google color are marked, so they keep it over the all-day color.
+  const day = svc.getPayload('4weeks', NOW).days.find((d) => d.date === '2026-11-18');
+  assert.equal(day.events.find((e) => e.title.startsWith("Grandma's")).ownColor, true);
+  const sat = svc.getPayload('4weeks', NOW).days.find((d) => d.date === '2026-11-21');
+  assert.equal(sat.events.find((e) => e.title === 'Soccer practice').ownColor, false);
   assert.equal(colorOf('2026-11-09', 'Book club'), CAL_COLOR, 'not in Google response');
 });
 

@@ -261,8 +261,11 @@ function eventItem(ev) {
   li.style.setProperty('--ev-color', ev.color);
   if (ev.allDay) {
     // Solid colored bar; title only (multi-day events repeat on each day).
-    li.style.background = ev.color;
-    li.style.color = textColorFor(ev.color);
+    // All-day events share one color (settings) so they stand out, unless the
+    // event has its own Google color.
+    const bar = (!ev.ownColor && state.display && state.display.allDayColor) || ev.color;
+    li.style.background = bar;
+    li.style.color = textColorFor(bar);
     li.append(el('span', 'cev-title', ev.title));
   } else {
     // Timed events: time and title written in the event's color (like DAKboard).

@@ -110,6 +110,9 @@
     .event-colors .warn { color: #ffb74d; }
     .event-colors .ok { color: var(--ok); }
 
+    .allday-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .allday-row .cal-color:disabled { opacity: 0.35; }
+
     /* Night dimming */
     .switch-row { display: flex; align-items: center; gap: 10px; min-height: 44px; }
     .switch-row input { width: 24px; height: 24px; accent-color: var(--accent); }
@@ -196,6 +199,14 @@
           <input type="range" id="fontScale" min="0.7" max="1.5" step="0.05" data-field="display.fontScale">
           <output id="fontScale-value"></output>
         </div>
+      </div>
+      <div class="field">
+        <span>All-day events</span>
+        <div class="allday-row">
+          <input type="color" id="allDayColor" class="cal-color" aria-label="All-day event color" data-field="display.allDayColor">
+          <label class="switch-row"><input type="checkbox" id="allDaySame"> Use one color for all all-day events</label>
+        </div>
+        <p class="hint">Otherwise each all-day event uses its calendar's color.</p>
       </div>
       <div class="field">
         <span>Night dimming</span>

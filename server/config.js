@@ -28,6 +28,8 @@ const DEFAULTS = {
     theme: 'dark', fontScale: 1.0, calendarView: '4weeks',
     // Night dimming (off by default): a dark layer over the dashboard between these times.
     dimEnabled: false, dimStart: '23:00', dimEnd: '06:00', dimLevel: 0.6,
+    // Bar color for all-day events ('' = use each calendar's color). Default: Google's "Tangerine".
+    allDayColor: '#F4511E',
   },
 };
 
@@ -63,6 +65,9 @@ function normalize(raw) {
   if (!CALENDAR_VIEWS.includes(cfg.display.calendarView)) cfg.display.calendarView = '4weeks';
   if (!['forecast', 'station'].includes(cfg.weather.currentSource)) cfg.weather.currentSource = 'forecast';
   cfg.display.dimEnabled = cfg.display.dimEnabled === true;
+  if (cfg.display.allDayColor !== '' && !HEX_COLOR.test(cfg.display.allDayColor)) {
+    cfg.display.allDayColor = DEFAULTS.display.allDayColor;
+  }
   const HH_MM = /^([01]\d|2[0-3]):[0-5]\d$/;
   if (!HH_MM.test(cfg.display.dimStart)) cfg.display.dimStart = DEFAULTS.display.dimStart;
   if (!HH_MM.test(cfg.display.dimEnd)) cfg.display.dimEnd = DEFAULTS.display.dimEnd;
