@@ -62,12 +62,14 @@ about 15 minutes to create a free read-only Google "robot" account, share
 your calendars with it, and put its key file on the LXC. The settings page
 shows whether it's working. Without it, events use their calendar's color.
 
-## Sky background
-By default the dashboard's background is a dark sky gradient that follows the
-time of day (night, dawn, day, dusk, worked out from the sun's position at your
-location) and the weather (blue when clear, grey when cloudy, slate for rain
-and storms, steel for snow). Calendar cells stay mostly opaque so text keeps
-its contrast. Switch to plain black under **Settings → Display → Background**.
+## Sky scene background
+By default the background is an illustrated sky that matches reality at your
+location: the sun and moon at their actual positions (the moon with its real
+phase), glowing softly behind the calendar; stars at night; clouds, rain, or
+snow across the top depending on the weather; and hills with pine trees along
+the bottom, colored for night, dawn, day, or dusk (white when it snows). It
+updates every few minutes and has no animation, so it's easy on the Pi.
+Switch to plain black under **Settings → Display → Background**.
 
 ## Night dimming
 Turn it on in **Settings → Display → Night dimming**: pick the hours (they can

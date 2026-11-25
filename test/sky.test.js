@@ -4,7 +4,8 @@ process.env.TZ = 'America/New_York';
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { sunElevation, skyPhase } = require('../server/sky');
+const { sunElevation, skyPhase, moonIllumination, scene } = require('../server/sky');
+const { createApp } = require('../server/index');
 const { normalize } = require('../server/config');
 const { applySettings } = require('../server/settings');
 
@@ -39,4 +40,36 @@ test('background setting: sky by default, plain allowed, others rejected', () =>
   applySettings(raw, { display: { background: 'plain' } });
   assert.equal(raw.display.background, 'plain');
   assert.throws(() => applySettings({}, { display: { background: 'disco' } }), { field: 'display.background' });
+});
+
+test('moon phase matches known new, first-quarter, and full moons (Jan 2024)', () => {
+  const full = moonIllumination(new Date('2024-01-25T17:54:00Z'));
+  const nw = moonIllumination(new Date('2024-01-11T11:57:00Z'));
+  const fq = moonIllumination(new Date('2024-01-18T03:52:00Z'));
+  assert.ok(full.fraction > 0.98 && Math.abs(full.phase - 0.5) < 0.03, 'full');
+  assert.ok(nw.fraction < 0.02 && (nw.phase < 0.03 || nw.phase > 0.97), 'new');
+  assert.ok(Math.abs(fq.fraction - 0.5) < 0.03 && Math.abs(fq.phase - 0.25) < 0.03, 'first quarter');
+});
+
+test('scene: sun due south and highest around noon; rounded for drawing', () => {
+  const sc = scene(at('12:00'), LAT, LON);
+  assert.equal(sc.phase, 'day');
+  assert.ok(Math.abs(sc.sun.az - 180) < 5, `sun azimuth ${sc.sun.az}`);
+  assert.ok(sc.sun.alt > 28 && sc.sun.alt < 33);
+  assert.equal(String(sc.sun.alt).split('.')[1]?.length || 0, 1, 'one decimal');
+  assert.ok(sc.moon.fraction >= 0 && sc.moon.fraction <= 1);
+});
+
+test('/api/scene: needs a location; returns sun and moon when set', async (t) => {
+  let cfg = { weather: { lat: 0, lon: 0 } };
+  const app = createApp({ getConfig: () => cfg, setConfig: () => {}, calendar: {}, weather: {}, todos: {} });
+  const server = await new Promise((r) => { const s = app.listen(0, '127.0.0.1', () => r(s)); });
+  t.after(() => server.close());
+  const url = `http://127.0.0.1:${server.address().port}/api/scene`;
+  assert.deepEqual(await (await fetch(url)).json(), { configured: false });
+  cfg = { weather: { lat: LAT, lon: LON } };
+  const body = await (await fetch(url)).json();
+  assert.equal(body.configured, true);
+  assert.ok(['night', 'dawn', 'day', 'dusk'].includes(body.phase));
+  assert.ok('alt' in body.sun && 'phase' in body.moon);
 });

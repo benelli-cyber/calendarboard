@@ -184,6 +184,8 @@ function applyConfig(cfg) {
 
   document.body.className = cfg.display.theme === 'light' ? 'theme-light' : 'theme-dark';
   document.documentElement.dataset.bg = cfg.display.background || 'sky';
+  // Illustrated scene: only with the sky background on the dark theme.
+  window.Scene?.setEnabled(cfg.display.background !== 'plain' && cfg.display.theme !== 'light');
   state.display = cfg.display;
   applyDim();
   document.documentElement.style.setProperty('--s', String(cfg.display.fontScale || 1));
@@ -354,6 +356,7 @@ function renderStale(data) {
 }
 
 function renderCalendar(data) {
+  window.Scene?.relayout(); // the alert banner or font size may have moved things
   renderWeekdayHeader(data);
   setText($('cal-title'), data.title);
   renderGrid(data);
@@ -497,6 +500,7 @@ function applySky(w) {
   const wx = w.current ? weatherGroup(w.current.icon) : '';
   if (root.sky !== sky) root.sky = sky;
   if (root.wx !== wx) root.wx = wx;
+  window.Scene?.setWeather(w.current ? w.current.icon : null);
 }
 
 async function loadWeather() {

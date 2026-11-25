@@ -16,6 +16,7 @@
  *   PUT  /api/settings     save settings to config.json; applied live
  *   GET  /settings         settings page (public/settings.html)
  *   GET  /api/event-colors Google per-event colors status (settings page)
+ *   GET  /api/scene        sun/moon position + moon phase for the sky scene
  *   GET  /api/health       simple status check
  *
  * Run directly (`node server/index.js`) to start the server. Tests import
@@ -25,6 +26,7 @@ const path = require('path');
 const express = require('express');
 const { loadConfig, updateConfig, publicConfig, CALENDAR_VIEWS, ROOT } = require('./config');
 const { toSettings, applySettings } = require('./settings');
+const { scene } = require('./sky');
 const pkg = require('../package.json');
 
 // Changes every time the server starts (e.g. after an update + restart).
@@ -81,6 +83,16 @@ function createApp({ getConfig, setConfig, calendar, weather, todos }) {
   });
 
   app.get('/api/weather', (req, res) => res.json(weather.getPayload()));
+
+  // Sun and moon for the illustrated sky (needs the weather location).
+  app.get('/api/scene', (req, res) => {
+    const lat = Number(getConfig().weather?.lat);
+    const lon = Number(getConfig().weather?.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon) || (lat === 0 && lon === 0)) {
+      return res.json({ configured: false });
+    }
+    res.json({ configured: true, ...scene(new Date(), lat, lon) });
+  });
 
   // ----- To-dos -----
 

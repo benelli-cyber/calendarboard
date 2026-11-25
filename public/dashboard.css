@@ -500,40 +500,50 @@ html, body {
   color: #ffb74d;
 }
 
-/* ---------- Sky background (display.background = "sky", dark theme only) ----------
-   A static gradient that follows the time of day (server: sky phase from the
-   sun's position) and is tinted by the weather. Changes a few times a day;
-   no transitions or blur (Pi 3B). Panels and calendar cells become slightly
-   see-through (70%) so the sky shows around them while text keeps a dark,
-   high-contrast backing. */
+/* ---------- Sky background + illustrated scene (display.background = "sky", dark theme) ----------
+   The gradient follows the time of day (server: sun position) and the weather.
+   public/scene.js draws the sun/moon/stars/clouds/rain/snow in the top band and
+   hills with pines in the bottom band, on an SVG (#scene) behind the dashboard.
+   Static between updates; no transitions or blur (Pi 3B). Calendar cells stay
+   70% opaque so event text keeps a dark backing; the bottom panels are more
+   see-through so the hills show. */
+#scene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.dashboard { position: relative; z-index: 1; }
+
 html[data-bg="sky"] body.theme-dark {
   --panel: rgba(12, 15, 20, 0.70);
   --faint: rgba(255, 255, 255, 0.12);
   --today-bg: rgba(20, 44, 64, 0.85);
-  --sky-top: #050912;
-  --sky-bottom: #0b1426;
-  --sky-glow: transparent;
-  background:
-    radial-gradient(ellipse at 85% -5%, var(--sky-glow), transparent 55%),
-    linear-gradient(to bottom, var(--sky-top), var(--sky-bottom));
+  --sky-top: #050a18;
+  --sky-mid: #0c1733;
+  --sky-low: #13234a;
+  background: linear-gradient(to bottom, var(--sky-top) 0%, var(--sky-mid) 45%, var(--sky-low) 100%);
 }
 html[data-bg="sky"] body.theme-dark .calendar { background: transparent; }
+html[data-bg="sky"] body.theme-dark .bottom-row .panel { background: rgba(8, 11, 16, 0.5); }
+html[data-bg="sky"][data-wx="snow"] body.theme-dark .bottom-row .panel { background: rgba(8, 11, 16, 0.72); }
 
-/* Night (any weather): deep blue-black */
-html[data-bg="sky"][data-sky="night"] body.theme-dark { --sky-top: #04070f; --sky-bottom: #0b1426; }
+/* Night */
+html[data-bg="sky"][data-sky="night"] body.theme-dark { --sky-top: #040814; --sky-mid: #0b1530; --sky-low: #16274f; }
+html[data-bg="sky"][data-sky="night"]:not([data-wx="clear"]) body.theme-dark { --sky-top: #0a0d14; --sky-mid: #141a26; --sky-low: #222a3a; }
 
-/* Dawn / dusk: warm when clear, muted otherwise */
-html[data-bg="sky"][data-sky="dawn"] body.theme-dark { --sky-top: #1c1838; --sky-bottom: #4a2a2e; --sky-glow: rgba(255, 170, 110, 0.22); }
-html[data-bg="sky"][data-sky="dusk"] body.theme-dark { --sky-top: #1a1433; --sky-bottom: #4b2716; --sky-glow: rgba(255, 140, 80, 0.22); }
+/* Dawn / dusk: purple sky with an orange horizon when clear, muted otherwise */
+html[data-bg="sky"][data-sky="dawn"] body.theme-dark { --sky-top: #2b2458; --sky-mid: #6b3f6a; --sky-low: #e08a5a; }
+html[data-bg="sky"][data-sky="dusk"] body.theme-dark { --sky-top: #251a4e; --sky-mid: #6a3456; --sky-low: #e06a3c; }
 html[data-bg="sky"][data-sky="dawn"]:not([data-wx="clear"]) body.theme-dark,
-html[data-bg="sky"][data-sky="dusk"]:not([data-wx="clear"]) body.theme-dark { --sky-top: #1b1b26; --sky-bottom: #352b30; --sky-glow: transparent; }
+html[data-bg="sky"][data-sky="dusk"]:not([data-wx="clear"]) body.theme-dark { --sky-top: #2a2838; --sky-mid: #45394a; --sky-low: #7a6068; }
 
 /* Day: blue when clear, grey/slate/steel otherwise */
-html[data-bg="sky"][data-sky="day"] body.theme-dark { --sky-top: #0b2a4d; --sky-bottom: #14466e; --sky-glow: rgba(255, 255, 255, 0.08); }
-html[data-bg="sky"][data-sky="day"][data-wx="cloudy"] body.theme-dark { --sky-top: #1b232d; --sky-bottom: #2e3945; --sky-glow: transparent; }
-html[data-bg="sky"][data-sky="day"][data-wx="rain"] body.theme-dark { --sky-top: #111b26; --sky-bottom: #22303e; --sky-glow: transparent; }
-html[data-bg="sky"][data-sky="day"][data-wx="storm"] body.theme-dark { --sky-top: #0c1117; --sky-bottom: #1c2530; --sky-glow: transparent; }
-html[data-bg="sky"][data-sky="day"][data-wx="snow"] body.theme-dark { --sky-top: #1f2a36; --sky-bottom: #3a4859; --sky-glow: rgba(255, 255, 255, 0.06); }
+html[data-bg="sky"][data-sky="day"] body.theme-dark { --sky-top: #1a5796; --sky-mid: #3a7fc0; --sky-low: #8cc0e8; }
+html[data-bg="sky"][data-sky="day"][data-wx="cloudy"] body.theme-dark { --sky-top: #3d4a5a; --sky-mid: #5a6878; --sky-low: #8693a2; }
+html[data-bg="sky"][data-sky="day"][data-wx="rain"] body.theme-dark { --sky-top: #283442; --sky-mid: #3c4a5a; --sky-low: #5d6b7c; }
+html[data-bg="sky"][data-sky="day"][data-wx="storm"] body.theme-dark { --sky-top: #141a24; --sky-mid: #232c38; --sky-low: #3a4554; }
+html[data-bg="sky"][data-sky="day"][data-wx="snow"] body.theme-dark { --sky-top: #4a5868; --sky-mid: #6c7a8b; --sky-low: #a3afbd; }
 
 /* ---------- Night dimming ----------
    One black layer with fixed opacity. Much cheaper on the Pi's GPU than a
