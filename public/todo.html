@@ -43,7 +43,12 @@
     #count { color: var(--muted); }
 
     /* Add form */
-    form { display: flex; gap: 10px; margin-bottom: 18px; }
+    form { margin-bottom: 18px; }
+    .add-row { display: flex; gap: 10px; }
+    .due-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; color: var(--muted); font-size: 17px; }
+    .due-row input[type=date] { min-height: 48px; padding: 8px 12px; font-size: 17px; color-scheme: dark; }
+    .due-row input[type=date]:invalid, .due-row input[type=date]:placeholder-shown { color: var(--muted); }
+    .clear-due { width: 44px; height: 44px; border: 0; background: none; color: var(--muted); font-size: 20px; }
     input {
       font: inherit;
       color: var(--text);
@@ -112,6 +117,26 @@
       background-repeat: no-repeat;
     }
     .text { flex: 1; min-width: 0; overflow-wrap: anywhere; padding: 8px 0; }
+
+    /* Due date chip; an invisible date input on top opens the native picker when tapped */
+    .due {
+      position: relative;
+      flex: 0 0 auto;
+      font-size: 15px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--faint);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .due.set { color: var(--text); border-color: #3a4450; }
+    .due.today { color: #000; background: #ffb74d; border-color: #ffb74d; }
+    .due.overdue { color: #fff; background: #c62828; border-color: #c62828; }
+    .due input {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      opacity: 0; border: 0; padding: 0; margin: 0; min-height: 0; cursor: pointer;
+    }
+    .done .due { display: none; }
     .by { display: block; font-size: 15px; color: var(--muted); }
     .done .text { color: var(--muted); text-decoration: line-through; }
     .del { color: var(--muted); font-size: 24px; }
@@ -142,8 +167,16 @@
   </header>
 
   <form id="add-form" autocomplete="off">
-    <input id="add-text" maxlength="200" placeholder="Add an item…" enterkeyhint="done" aria-label="New item">
-    <button class="add-btn" type="submit">Add</button>
+    <div class="add-row">
+      <input id="add-text" maxlength="200" placeholder="Add an item…" enterkeyhint="done" aria-label="New item">
+      <button class="add-btn" type="submit">Add</button>
+    </div>
+    <!-- Optional due date: tapping opens the phone's own calendar picker -->
+    <label class="due-row">
+      <span>Due</span>
+      <input type="date" id="add-due" aria-label="Due date (optional)">
+      <button type="button" id="clear-due" class="clear-due" hidden aria-label="No due date">✕</button>
+    </label>
   </form>
 
   <div id="error" class="error" hidden></div>

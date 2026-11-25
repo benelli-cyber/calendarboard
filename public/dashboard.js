@@ -499,6 +499,26 @@ async function loadWeather() {
 // To-do list (read-only here; edited on phones at /todo)
 // ---------------------------------------------------------------------------
 
+/** "YYYY-MM-DD" of today + `days` in the dashboard's timezone. */
+function isoDayInTz(days = 0) {
+  const d = new Date(Date.now() + days * 86_400_000);
+  return new Intl.DateTimeFormat('en-CA', { timeZone: state.timezone }).format(d); // en-CA gives YYYY-MM-DD
+}
+
+/** Due label for the to-do panel: Today / Tomorrow / Wed / Dec 3; overdue in red. */
+function todoDue(dueDate) {
+  if (!dueDate) return null;
+  const [y, m, d] = dueDate.split('-').map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d, 12)); // noon UTC: same calendar day everywhere
+  const fmt = (opts) => new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', ...opts }).format(date);
+  const today = isoDayInTz(0);
+  if (dueDate < today) return { text: fmt({ month: 'short', day: 'numeric' }), cls: 'overdue' };
+  if (dueDate === today) return { text: 'Today', cls: 'today' };
+  if (dueDate === isoDayInTz(1)) return { text: 'Tomorrow', cls: '' };
+  if (dueDate <= isoDayInTz(6)) return { text: fmt({ weekday: 'short' }), cls: '' };
+  return { text: fmt({ month: 'short', day: 'numeric' }), cls: '' };
+}
+
 function renderTodos(items) {
   const list = $('todo-list');
   if (!items.length) {
@@ -509,6 +529,8 @@ function renderTodos(items) {
   list.replaceChildren(...items.map((item) => {
     const li = el('li', item.done ? 'todo-item done' : 'todo-item');
     li.append(el('span', 'todo-box'), el('span', 'todo-text', item.text));
+    const due = !item.done && todoDue(item.dueDate);
+    if (due) li.append(el('span', `todo-due ${due.cls}`, due.text));
     return li;
   }));
   fitCell(list); // "+N more" when there are more items than fit

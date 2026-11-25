@@ -75,8 +75,9 @@ Family phones ──> http://<lxc-ip>:<port>/todo  (LAN now, Tailscale later)
 - **Optional dev tool:** a script that logs NWS vs Open-Meteo current temps hourly to a CSV for comparison
 
 ### 4. Shared To-Do List
-- Stored in SQLite: `id, text, done, created_at, done_at, added_by (optional)`
-- **Dashboard:** shows open items; checked items show struck-through, then disappear after 24 h
+- Stored in SQLite: `id, text, done, created_at, done_at, added_by (optional), due_date (optional "YYYY-MM-DD")`; older databases get the column automatically
+- **Due dates:** picked with the phone's native date picker (`<input type="date">`, no custom calendar); open items sort overdue/earliest first, then undated (newest first)
+- **Dashboard:** shows open items with a due label (Today in amber, overdue in red, Tomorrow / weekday / "Dec 3"); checked items show struck-through, then disappear after 24 h
 - **`/todo` page:** mobile-first, large tap targets. Add item, check/uncheck, delete. Works as an "Add to Home Screen" web app (include a `manifest.json` and icon).
 - No authentication (access is controlled at the network layer: LAN now, Tailscale later)
 - Dashboard picks up changes within ~30 seconds

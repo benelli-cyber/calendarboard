@@ -9,8 +9,8 @@
  *   POST /api/display      { calendarView: "4weeks"|"3weeks"|"week" } – the on-screen toggle button
  *   GET  /api/weather      current conditions, today, 5-day forecast, active alerts
  *   GET  /api/todos        open items + items checked in the last 24 h
- *   POST /api/todos        { text, addedBy? } → new item
- *   PATCH /api/todos/:id   { done: true|false }
+ *   POST /api/todos        { text, addedBy?, dueDate? ("YYYY-MM-DD") } → new item
+ *   PATCH /api/todos/:id   { done?: true|false, dueDate?: "YYYY-MM-DD"|null }
  *   DELETE /api/todos/:id
  *   GET  /api/settings     editable settings (calendar URLs masked)
  *   PUT  /api/settings     save settings to config.json; applied live
@@ -102,10 +102,10 @@ function createApp({ getConfig, setConfig, calendar, weather, todos }) {
 
   app.get('/api/todos', todoRoute((req, res) => res.json({ items: todos.list() })));
   app.post('/api/todos', json, todoRoute((req, res) => {
-    res.status(201).json(todos.add(req.body?.text, req.body?.addedBy));
+    res.status(201).json(todos.add(req.body?.text, req.body?.addedBy, new Date(), req.body?.dueDate));
   }));
   app.patch('/api/todos/:id', json, todoRoute((req, res) => {
-    res.json(todos.setDone(idParam(req), req.body?.done));
+    res.json(todos.update(idParam(req), req.body || {}));
   }));
   app.delete('/api/todos/:id', todoRoute((req, res) => {
     todos.remove(idParam(req));

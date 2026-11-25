@@ -10,6 +10,28 @@
 'use strict';
 
 const POLL_MS = 15 * 1000;
+const WEEKDAY = new Intl.DateTimeFormat('en-US', { weekday: 'short' });
+const MONTH_DAY = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
+
+/** "YYYY-MM-DD" for a local date, plus `days`. */
+function isoDay(days = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/** Label + style for a due date: Today / Tomorrow / Wed / Dec 3, overdue in red. */
+function dueInfo(dueDate) {
+  if (!dueDate) return { text: 'Add date', cls: '' };
+  const [y, m, d] = dueDate.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  if (dueDate < isoDay(0)) return { text: `Overdue · ${MONTH_DAY.format(date)}`, cls: 'set overdue' };
+  if (dueDate === isoDay(0)) return { text: 'Today', cls: 'set today' };
+  if (dueDate === isoDay(1)) return { text: 'Tomorrow', cls: 'set' };
+  if (dueDate <= isoDay(6)) return { text: WEEKDAY.format(date), cls: 'set' };
+  return { text: MONTH_DAY.format(date), cls: 'set' };
+}
 const $ = (id) => document.getElementById(id);
 let items = [];
 
@@ -61,12 +83,23 @@ function itemRow(item) {
   const text = el('span', 'text', item.text);
   if (item.addedBy) text.append(el('span', 'by', item.addedBy));
 
+  // Due date chip. The real date input sits invisibly on top of it, so a tap
+  // opens the phone's own calendar picker (with its Clear/Reset button).
+  const info = dueInfo(item.dueDate);
+  const due = el('label', `due ${info.cls}`, info.text);
+  const picker = el('input');
+  picker.type = 'date';
+  picker.value = item.dueDate || '';
+  picker.setAttribute('aria-label', `Due date for ${item.text}`);
+  picker.addEventListener('change', () => setDue(item, picker.value || null));
+  due.append(picker);
+
   const del = el('button', 'del', '✕');
   del.type = 'button';
   del.setAttribute('aria-label', `Delete ${item.text}`);
   del.addEventListener('click', () => remove(item));
 
-  li.append(check, text, del);
+  li.append(check, text, due, del);
   return li;
 }
 
@@ -94,6 +127,19 @@ async function load() {
   }
 }
 
+async function setDue(item, dueDate) {
+  try {
+    await api('PATCH', `/api/todos/${item.id}`, { dueDate });
+  } catch (err) {
+    showError(err.message);
+  }
+  load(); // re-sorts the list by date
+}
+
+function showClearDue() {
+  $('clear-due').hidden = !$('add-due').value;
+}
+
 async function add(event) {
   event.preventDefault();
   const input = $('add-text');
@@ -102,8 +148,14 @@ async function add(event) {
   const button = event.submitter || document.querySelector('.add-btn');
   button.disabled = true; // no double adds from a double tap
   try {
-    await api('POST', '/api/todos', { text, addedBy: $('name').value.trim() || undefined });
+    await api('POST', '/api/todos', {
+      text,
+      addedBy: $('name').value.trim() || undefined,
+      dueDate: $('add-due').value || undefined,
+    });
     input.value = '';
+    $('add-due').value = '';
+    showClearDue();
     await load();
   } catch (err) {
     showError(err.message);
@@ -144,6 +196,12 @@ nameInput.value = localStorage.getItem('todo-name') || '';
 nameInput.addEventListener('change', () => localStorage.setItem('todo-name', nameInput.value.trim()));
 
 $('add-form').addEventListener('submit', add);
+$('add-due').addEventListener('change', showClearDue);
+$('clear-due').addEventListener('click', (e) => {
+  e.preventDefault();
+  $('add-due').value = '';
+  showClearDue();
+});
 
 load();
 setInterval(() => { if (document.visibilityState === 'visible') load(); }, POLL_MS);

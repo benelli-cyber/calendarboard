@@ -156,6 +156,11 @@ Open `http://<lxc-ip>:8080/settings` on a phone or computer on the home network.
   items, tap the box to check one off, tap ✕ to delete (asks first).
   Optionally type your name at the bottom; your phone remembers it and shows it
   under the items you add.
+- **Due dates (optional):** pick one in the *Due* box when adding an item, or
+  tap an item's date chip ("Add date") to set, change, or clear it, using your
+  phone's own calendar picker. Items are sorted overdue first, then by date,
+  then undated; the dashboard labels them Today (amber), overdue (red),
+  Tomorrow, a weekday, or a date.
 - The dashboard shows open items (newest first), then checked items, struck
   through, for 24 hours. It picks up changes within ~20 seconds; open phone
   pages re-sync every 15 seconds.

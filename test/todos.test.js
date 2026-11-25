@@ -1,6 +1,9 @@
 'use strict';
 // Run with: npm test
 const test = require('node:test');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const assert = require('node:assert/strict');
 const { TodoStore, MAX_TEXT } = require('../server/todos');
 const { createApp } = require('../server/index');
@@ -67,6 +70,48 @@ test('input is cleaned and validated', () => {
   assert.throws(() => s.remove(999), { status: 404 });
 });
 
+test('due dates: earliest first, then undated (newest first), then checked', () => {
+  const s = new TodoStore(':memory:');
+  s.add('No date, older', null, hours(0));
+  s.add('Due Dec 3', null, hours(1), '2026-12-03');
+  s.add('No date, newer', null, hours(2));
+  s.add('Overdue Nov 20', null, hours(3), '2026-11-20');
+  const done = s.add('Checked', null, hours(4), '2026-11-01');
+  s.setDone(done.id, true, hours(5));
+  assert.deepEqual(s.list(hours(6)).map((i) => i.text),
+    ['Overdue Nov 20', 'Due Dec 3', 'No date, newer', 'No date, older', 'Checked']);
+  assert.equal(s.list(hours(6))[0].dueDate, '2026-11-20');
+});
+
+test('due dates: set, change, clear, and validate', () => {
+  const s = new TodoStore(':memory:');
+  const a = s.add('Permission slip');
+  assert.equal(a.dueDate, null);
+  assert.equal(s.update(a.id, { dueDate: '2026-12-01' }).dueDate, '2026-12-01');
+  assert.equal(s.update(a.id, { dueDate: '' }).dueDate, null, 'empty string clears it');
+  assert.equal(s.update(a.id, { dueDate: '2026-12-02', done: true }).done, true);
+  for (const bad of ['2026-02-30', '12/03/2026', '2026-1-5', 20261203]) {
+    assert.throws(() => s.add('x', null, new Date(), bad), { status: 400 }, String(bad));
+  }
+  assert.throws(() => s.update(a.id, {}), { status: 400 });
+  assert.throws(() => s.update(999, { dueDate: '2026-12-01' }), { status: 404 });
+});
+
+test('a to-do database from before due dates is upgraded in place', () => {
+  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'fd-todo-')), 'todos.db');
+  const Database = require('better-sqlite3');
+  const old = new Database(file);
+  old.exec(`CREATE TABLE todos (id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL, done_at TEXT, added_by TEXT)`);
+  old.prepare('INSERT INTO todos (text, created_at) VALUES (?, ?)').run('Old item', T0.toISOString());
+  old.close();
+  const s = new TodoStore(file);
+  assert.deepEqual(s.list(hours(1)).map((i) => [i.text, i.dueDate]), [['Old item', null]]);
+  const b = s.add('New item', null, hours(1), '2026-12-24');
+  assert.equal(b.dueDate, '2026-12-24');
+  s.close();
+});
+
 // ---------------------------------------------------------------------------
 // HTTP API (real Express app on a random port, in-memory database)
 // ---------------------------------------------------------------------------
@@ -111,6 +156,17 @@ test('API: full add / check / delete cycle', async (t) => {
   assert.equal(r.status, 204);
   r = await call('GET', '/api/todos');
   assert.deepEqual(r.body.items, []);
+});
+
+test('API: add with a due date, change it, clear it', async (t) => {
+  const { call } = await startApi(t);
+  let r = await call('POST', '/api/todos', { text: 'Dentist forms', dueDate: '2026-12-03' });
+  assert.equal(r.status, 201);
+  assert.equal(r.body.dueDate, '2026-12-03');
+  r = await call('PATCH', `/api/todos/${r.body.id}`, { dueDate: null });
+  assert.equal(r.body.dueDate, null);
+  assert.equal((await call('POST', '/api/todos', { text: 'x', dueDate: 'soon' })).status, 400);
+  assert.equal((await call('PATCH', `/api/todos/${r.body.id}`, {})).status, 400);
 });
 
 test('API: bad input gets 400/404, not 500', async (t) => {

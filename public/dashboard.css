@@ -463,6 +463,18 @@ html, body {
   text-overflow: ellipsis;
 }
 
+.todo-due {
+  flex: 0 0 auto;
+  font-size: 0.72em;
+  padding: 0.1em 0.45em;
+  border-radius: 0.4em;
+  color: var(--muted);
+  border: 2px solid var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+.todo-due.today { color: #000000; background: #ffb74d; border-color: #ffb74d; }
+.todo-due.overdue { color: #ffffff; background: #c62828; border-color: #c62828; }
+
 .todo-item.done .todo-text {
   color: var(--muted);
   text-decoration: line-through;
