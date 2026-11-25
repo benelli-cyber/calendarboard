@@ -181,6 +181,7 @@ test('service: forecast setting is used, and the nearest station is named', asyn
   const { svc } = makeService(fakeFetch({}), 38.8894, -77.0352, 'forecast');
   await svc.refreshWeather(NOW);
   const p = svc.getPayload(NOW);
+  assert.equal(p.sky, 'dusk', '4:40 PM in DC in late November');
   assert.equal(p.current.temp, 50);
   assert.deepEqual(p.station, { id: 'KDCA', name: fx('nws-stations').features[0].properties.name });
 });

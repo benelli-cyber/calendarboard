@@ -212,6 +212,7 @@ function render(s) {
   document.querySelector(`input[name=theme][value=${s.display.theme}]`).checked = true;
   $('fontScale').value = s.display.fontScale;
   showFontScale();
+  document.querySelector(`input[name=background][value="${s.display.background || 'sky'}"]`).checked = true;
   $('allDaySame').checked = Boolean(s.display.allDayColor);
   $('allDayColor').value = s.display.allDayColor || '#f4511e';
   $('allDayColor').disabled = !s.display.allDayColor;
@@ -334,6 +335,7 @@ async function save(event) {
       theme: document.querySelector('input[name=theme]:checked').value,
       fontScale: Number($('fontScale').value),
       allDayColor: $('allDaySame').checked ? $('allDayColor').value : '',
+      background: document.querySelector('input[name=background]:checked').value,
       dimEnabled: $('dimEnabled').checked,
       dimStart: $('dimStart').value,
       dimEnd: $('dimEnd').value,

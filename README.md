@@ -62,6 +62,13 @@ about 15 minutes to create a free read-only Google "robot" account, share
 your calendars with it, and put its key file on the LXC. The settings page
 shows whether it's working. Without it, events use their calendar's color.
 
+## Sky background
+By default the dashboard's background is a dark sky gradient that follows the
+time of day (night, dawn, day, dusk, worked out from the sun's position at your
+location) and the weather (blue when clear, grey when cloudy, slate for rain
+and storms, steel for snow). Calendar cells stay mostly opaque so text keeps
+its contrast. Switch to plain black under **Settings → Display → Background**.
+
 ## Night dimming
 Turn it on in **Settings → Display → Night dimming**: pick the hours (they can
 cross midnight, e.g. 11 PM to 6 AM) and how dark. A black layer covers the

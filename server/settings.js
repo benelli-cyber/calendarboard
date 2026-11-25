@@ -56,6 +56,7 @@ function toSettings(cfg) {
       dimEnd: cfg.display.dimEnd,
       dimLevel: cfg.display.dimLevel,
       allDayColor: cfg.display.allDayColor,
+      background: cfg.display.background,
     },
     colorRules: cfg.colorRules,
     weather: {
@@ -160,6 +161,10 @@ function applySettings(raw, input) {
     if (d.calendarView !== undefined) {
       if (!CALENDAR_VIEWS.includes(d.calendarView)) throw new SettingsError('display.calendarView', 'View must be 4weeks, 3weeks, or week');
       raw.display.calendarView = d.calendarView;
+    }
+    if (d.background !== undefined) {
+      if (!['sky', 'plain'].includes(d.background)) throw new SettingsError('display.background', 'Background must be sky or plain');
+      raw.display.background = d.background;
     }
     if (d.allDayColor !== undefined) {
       if (d.allDayColor !== '' && !HEX_COLOR.test(d.allDayColor)) {

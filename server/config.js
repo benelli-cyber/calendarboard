@@ -30,6 +30,8 @@ const DEFAULTS = {
     dimEnabled: false, dimStart: '23:00', dimEnd: '06:00', dimLevel: 0.6,
     // Bar color for all-day events ('' = use each calendar's color). Default: Google's "Tangerine".
     allDayColor: '#F4511E',
+    // 'sky' = gradient that follows time of day + weather; 'plain' = black
+    background: 'sky',
   },
 };
 
@@ -103,6 +105,7 @@ function normalize(raw) {
   if (!CALENDAR_VIEWS.includes(cfg.display.calendarView)) cfg.display.calendarView = '4weeks';
   if (!['forecast', 'station'].includes(cfg.weather.currentSource)) cfg.weather.currentSource = 'forecast';
   cfg.display.dimEnabled = cfg.display.dimEnabled === true;
+  if (!['sky', 'plain'].includes(cfg.display.background)) cfg.display.background = 'sky';
   if (cfg.display.allDayColor !== '' && !HEX_COLOR.test(cfg.display.allDayColor)) {
     cfg.display.allDayColor = DEFAULTS.display.allDayColor;
   }

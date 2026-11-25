@@ -26,6 +26,7 @@
 const fs = require('fs');
 const path = require('path');
 const { startOfDay, dayKey } = require('./dates');
+const { skyPhase } = require('./sky');
 
 const NWS_BASE = 'https://api.weather.gov';
 const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast';
@@ -524,6 +525,8 @@ class WeatherService {
     const alerts = this.alerts?.locationKey === key ? this.alerts.list : [];
     return {
       configured: true,
+      // 'night' | 'dawn' | 'day' | 'dusk' at the configured location (sky background)
+      sky: skyPhase(now, Number(this.getConfig().weather.lat), Number(this.getConfig().weather.lon)),
       source: w?.data.source || null,
       // Nearest NWS station (shown on the settings page next to the "station" option)
       station: this.points?.locationKey === key && this.points.stations?.[0]

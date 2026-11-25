@@ -183,6 +183,7 @@ function applyConfig(cfg) {
   }
 
   document.body.className = cfg.display.theme === 'light' ? 'theme-light' : 'theme-dark';
+  document.documentElement.dataset.bg = cfg.display.background || 'sky';
   state.display = cfg.display;
   applyDim();
   document.documentElement.style.setProperty('--s', String(cfg.display.fontScale || 1));
@@ -480,12 +481,31 @@ function renderForecast(w) {
   setText(note, text);
 }
 
+/** Weather icon → one of the sky tints: clear, cloudy, rain, storm, snow. */
+function weatherGroup(icon) {
+  if (!icon || icon.startsWith('clear') || icon.startsWith('partly')) return 'clear';
+  if (icon === 'rain' || icon === 'sleet') return 'rain';
+  if (icon === 'thunder') return 'storm';
+  if (icon === 'snow') return 'snow';
+  return 'cloudy'; // cloudy, fog, wind
+}
+
+/** Sky background: time of day (from the server) + weather tint. Changes only a few times a day. */
+function applySky(w) {
+  const root = document.documentElement.dataset;
+  const sky = w.sky || '';
+  const wx = w.current ? weatherGroup(w.current.icon) : '';
+  if (root.sky !== sky) root.sky = sky;
+  if (root.wx !== wx) root.wx = wx;
+}
+
 async function loadWeather() {
   try {
     const w = await getJson('/api/weather');
     const json = JSON.stringify(w);
     if (json === state.weatherJson) return; // nothing changed → no DOM work
     state.weatherJson = json;
+    applySky(w);
     renderCurrentWeather(w);
     renderForecast(w);
     // The banner changes the calendar's height, so re-fit the calendar cells.

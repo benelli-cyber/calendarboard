@@ -98,6 +98,7 @@ Top to bottom:
 - Small **4 Weeks | 3 Weeks | Week** toggle button in the bottom-right corner (inside the page margin)
 
 - Default **dark theme** (better on a 24/7 display); optional light theme
+- **Sky background** (`display.background: "sky"` default, or `"plain"`; dark theme only): a static gradient by time of day (`server/sky.js` computes night/dawn/day/dusk from the sun's position at the configured lat/lon, sent as `sky` in `/api/weather`) tinted by weather (clear/cloudy/rain/storm/snow). Panels and calendar cells are 70% opaque so the sky shows while text keeps a dark backing; past days fade their contents, not the cell. No transitions/blur (Pi 3B)
 - Base font size large (e.g., clock ~120px; month-cell events ~18px with titles wrapping to 2 lines, week-column titles ~21px, at the user's request to match DAKboard); scale via config
 - The calendar panel uses the full screen width, edge to edge (pulled out over the page margins; no side borders)
 - Night dimming on a schedule (`display.dimEnabled`, `dimStart`, `dimEnd`, `dimLevel`; off by default; may cross midnight): a single black overlay, set on the settings page
